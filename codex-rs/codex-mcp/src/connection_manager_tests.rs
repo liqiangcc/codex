@@ -27,8 +27,8 @@ use codex_config::McpServerToolConfig;
 use codex_config::types::AuthKeyringBackendKind;
 use codex_config::types::OAuthCredentialsStoreMode;
 use codex_exec_server::EnvironmentManager;
-use codex_login::CallerProvidedAuth;
 use codex_login::CodexAuth;
+use codex_login::ExternalProvidedAuth;
 use codex_protocol::ToolName;
 use codex_protocol::mcp::McpServerInfo;
 use codex_protocol::models::PermissionProfile;
@@ -72,9 +72,9 @@ fn create_test_tool(server_name: &str, tool_name: &str) -> ToolInfo {
 }
 
 #[test]
-fn caller_provided_auth_scopes_codex_apps_cache() {
-    let auth = CodexAuth::CallerProvided(
-        CallerProvidedAuth::new([], "user-123").with_account_id("account-123"),
+fn external_provided_auth_scopes_codex_apps_cache() {
+    let auth = CodexAuth::ExternalProvided(
+        ExternalProvidedAuth::new([], "user-123").with_account_id("account-123"),
     );
 
     assert_eq!(
