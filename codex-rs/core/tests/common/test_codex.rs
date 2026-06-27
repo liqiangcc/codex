@@ -143,6 +143,31 @@ impl TestEnv {
         })
     }
 
+    /// Builds a host-native test environment that exercises the remote
+    /// exec-server path through the provided WebSocket URL.
+    ///
+    /// This keeps the target cwd local while selecting the remote environment
+    /// id, which is useful for localhost transport fixtures such as network
+    /// interposers.
+    pub async fn local_with_exec_server_url(exec_server_url: String) -> Result<Self> {
+        let local_cwd_temp_dir = Arc::new(TempDir::new()?);
+        let cwd = local_cwd_temp_dir.abs();
+        let environment =
+            codex_exec_server::Environment::create_for_tests(Some(exec_server_url.clone()))?;
+        let selection = TurnEnvironmentSelection {
+            environment_id: codex_exec_server::REMOTE_ENVIRONMENT_ID.to_string(),
+            cwd: PathUri::from_abs_path(&cwd),
+        };
+        Ok(Self {
+            environment,
+            exec_server_url: Some(exec_server_url),
+            cwd,
+            selection,
+            local_cwd_temp_dir: Some(local_cwd_temp_dir),
+            remote_container_name: None,
+        })
+    }
+
     pub fn cwd(&self) -> &AbsolutePathBuf {
         &self.cwd
     }

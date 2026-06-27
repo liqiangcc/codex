@@ -9,14 +9,52 @@ use codex_app_server_protocol::ThreadStartParams;
 use codex_app_server_protocol::ThreadStartResponse;
 use codex_app_server_protocol::TurnStartParams;
 use codex_app_server_protocol::UserInput as V2UserInput;
+use core_test_support::is_remote_test_environment;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::time::Duration;
+use std::time::Instant;
 use tempfile::TempDir;
 use tokio::time::timeout;
 
 const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[tokio::test]
+async fn builder_interposes_fixed_delay_for_local_auto_env() -> Result<()> {
+    if is_remote_test_environment() {
+        return Ok(());
+    }
+
+    let codex_home = TempDir::new()?;
+    let requested_delay = Duration::from_millis(20);
+    let mut mcp = TestAppServer::builder(codex_home.path())
+        .with_exec_server_delay(requested_delay)
+        .build()
+        .await?;
+    timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
+    assert_eq!(
+        mcp.auto_env_params()?.environment_id,
+        codex_exec_server::REMOTE_ENVIRONMENT_ID
+    );
+
+    let thread_start = Instant::now();
+    let request_id = mcp
+        .send_thread_start_request_with_auto_env(ThreadStartParams::default())
+        .await?;
+    let _: JSONRPCResponse = timeout(
+        DEFAULT_READ_TIMEOUT,
+        mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+    let elapsed = thread_start.elapsed();
+    assert!(
+        elapsed >= requested_delay,
+        "thread/start completed in {elapsed:?}, below the requested {requested_delay:?} delay"
+    );
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()> {

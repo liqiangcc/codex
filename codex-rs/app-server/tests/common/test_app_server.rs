@@ -4,6 +4,7 @@ use std::process::ExitStatus;
 use std::process::Stdio;
 use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
+use std::time::Duration;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::BufReader;
@@ -120,11 +121,13 @@ use codex_exec_server::CODEX_EXEC_SERVER_NOISE_ENVIRONMENT_ID_ENV_VAR;
 use codex_exec_server::CODEX_EXEC_SERVER_NOISE_REGISTRY_URL_ENV_VAR;
 use codex_exec_server::CODEX_EXEC_SERVER_URL_ENV_VAR;
 use codex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use core_test_support::is_remote_test_environment;
 use core_test_support::test_codex::TestEnv;
 use core_test_support::test_codex::test_env;
 use tokio::process::Command;
 
 use crate::json_logging::JsonLogCapture;
+use crate::rpc_delay::DelayedExecServer;
 
 pub struct TestAppServer {
     next_request_id: AtomicI64,
@@ -138,6 +141,7 @@ pub struct TestAppServer {
     pending_messages: VecDeque<JSONRPCMessage>,
     auto_env: Option<TestEnv>,
     json_logs: JsonLogCapture,
+    _delayed_exec_server: Option<DelayedExecServer>,
 }
 
 pub const DEFAULT_CLIENT_NAME: &str = "codex-app-server-tests";
@@ -145,6 +149,14 @@ pub const DISABLE_PLUGIN_STARTUP_TASKS_ARG: &str = "--disable-plugin-startup-tas
 const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "CODEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
 
 impl TestAppServer {
+    /// Starts building a server with the standard automatic test environment.
+    pub fn builder(codex_home: &Path) -> TestAppServerBuilder<'_> {
+        TestAppServerBuilder {
+            codex_home,
+            exec_server_delay: None,
+        }
+    }
+
     pub async fn wait_for_exit(&mut self) -> std::io::Result<ExitStatus> {
         self.process.wait().await
     }
@@ -164,7 +176,7 @@ impl TestAppServer {
     /// URL-based configuration, this helper rejects a `codex_home` containing
     /// that file.
     pub async fn new_with_auto_env(codex_home: &Path) -> anyhow::Result<Self> {
-        Self::new_with_auto_env_and_env(codex_home, &[]).await
+        Self::builder(codex_home).build().await
     }
 
     /// Starts an auto-environment app server that emits JSON logs.
@@ -189,6 +201,19 @@ impl TestAppServer {
         codex_home: &Path,
         extra_env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
+        Self::new_with_auto_env_options(
+            codex_home,
+            /*exec_server_delay*/ None,
+            extra_env_overrides,
+        )
+        .await
+    }
+
+    async fn new_with_auto_env_options(
+        codex_home: &Path,
+        exec_server_delay: Option<Duration>,
+        extra_env_overrides: &[(&str, Option<&str>)],
+    ) -> anyhow::Result<Self> {
         let environments_toml = codex_home.join("environments.toml");
         ensure!(
             !environments_toml
@@ -198,7 +223,22 @@ impl TestAppServer {
             environments_toml.display()
         );
 
-        let auto_env = test_env().await?;
+        let (auto_env, delayed_exec_server) = match exec_server_delay {
+            Some(exec_server_delay) => {
+                assert!(
+                    !is_remote_test_environment(),
+                    "TestAppServer exec-server delay only supports the local test environment"
+                );
+                let delayed_exec_server =
+                    DelayedExecServer::start(codex_home, exec_server_delay).await?;
+                let auto_env = TestEnv::local_with_exec_server_url(
+                    delayed_exec_server.websocket_url().to_string(),
+                )
+                .await?;
+                (auto_env, Some(delayed_exec_server))
+            }
+            None => (test_env().await?, None),
+        };
         // Noise registry configuration takes precedence over the URL-based
         // provider, so clear inherited values to keep the selection hermetic.
         let mut env_overrides = vec![
@@ -214,6 +254,7 @@ impl TestAppServer {
         env_overrides.extend_from_slice(extra_env_overrides);
         let mut app_server = Self::new_with_env(codex_home, &env_overrides).await?;
         app_server.auto_env = Some(auto_env);
+        app_server._delayed_exec_server = delayed_exec_server;
         Ok(app_server)
     }
 
@@ -399,6 +440,7 @@ impl TestAppServer {
             pending_messages: VecDeque::new(),
             auto_env: None,
             json_logs,
+            _delayed_exec_server: None,
         })
     }
 
@@ -1789,6 +1831,29 @@ impl TestAppServer {
             JSONRPCMessage::Error(err) => Some(&err.id),
             JSONRPCMessage::Notification(_) => None,
         }
+    }
+}
+
+/// Builds a TestAppServer with the standard automatic environment by default.
+///
+/// RPC delay is intentionally local-only for now. Enabling it switches the
+/// automatic environment onto a localhost WebSocket exec-server so a TCP
+/// interposer can add a fixed delay to the app-server/exec-server RPC stream.
+pub struct TestAppServerBuilder<'a> {
+    codex_home: &'a Path,
+    exec_server_delay: Option<Duration>,
+}
+
+impl<'a> TestAppServerBuilder<'a> {
+    /// Adds this fixed one-way delay to the localhost app-server/exec-server
+    /// RPC stream. A 15ms delay contributes roughly 30ms to a round trip.
+    pub fn with_exec_server_delay(mut self, exec_server_delay: Duration) -> Self {
+        self.exec_server_delay = Some(exec_server_delay);
+        self
+    }
+
+    pub async fn build(self) -> anyhow::Result<TestAppServer> {
+        TestAppServer::new_with_auto_env_options(self.codex_home, self.exec_server_delay, &[]).await
     }
 }
 
