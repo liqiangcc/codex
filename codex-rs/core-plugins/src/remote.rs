@@ -1226,7 +1226,7 @@ async fn build_remote_plugin_detail(
     apply_app_mcp_routing_policy(
         &mut app_declarations,
         &mut mcp_servers,
-        Some(auth.api_auth_mode()),
+        Some(auth.plugin_routing_auth_mode()),
         /*plugin_active*/ true,
     );
     let app_ids = app_connector_ids_from_declarations(&app_declarations)

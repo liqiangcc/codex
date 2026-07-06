@@ -157,7 +157,7 @@ pub trait ModelProvider: fmt::Debug + Send + Sync {
         Box::pin(async move {
             let auth = self.auth().await;
             self.info()
-                .to_api_provider(auth.as_ref().map(CodexAuth::auth_mode))
+                .to_api_provider(auth.as_ref().is_some_and(CodexAuth::uses_codex_backend))
         })
     }
 
@@ -498,6 +498,23 @@ mod tests {
                 .expect("runtime base URL should resolve"),
             Some("https://example.test/v1".to_string())
         );
+    }
+
+    #[tokio::test]
+    async fn external_auth_without_backend_capability_uses_openai_base_url() {
+        let provider = create_model_provider(
+            ModelProviderInfo::create_openai_provider(/*base_url*/ None),
+            Some(AuthManager::from_auth_for_testing(
+                CodexAuth::ExternalProvided(ExternalAuthSnapshot::new([], "user-123")),
+            )),
+        );
+
+        let api_provider = provider
+            .api_provider()
+            .await
+            .expect("API provider should resolve");
+
+        assert_eq!(api_provider.base_url, "https://api.openai.com/v1");
     }
 
     #[test]

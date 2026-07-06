@@ -567,7 +567,7 @@ impl PluginRequestProcessor {
         {
             return Ok(empty_response());
         }
-        let auth_mode = auth.as_ref().map(CodexAuth::api_auth_mode);
+        let auth_mode = auth.as_ref().map(CodexAuth::plugin_routing_auth_mode);
         plugins_manager.set_auth_mode(auth_mode);
         let plugins_input = config.plugins_config_input();
         let include_shared_with_me =
@@ -817,7 +817,7 @@ impl PluginRequestProcessor {
         {
             return Ok(empty_response());
         }
-        plugins_manager.set_auth_mode(auth.as_ref().map(CodexAuth::api_auth_mode));
+        plugins_manager.set_auth_mode(auth.as_ref().map(CodexAuth::plugin_routing_auth_mode));
 
         let plugins_input = config.plugins_config_input();
         let remote_installed_plugin_visible_marketplaces =
@@ -1008,7 +1008,7 @@ impl PluginRequestProcessor {
         let config = self.load_latest_config(config_cwd).await?;
         let plugins_input = config.plugins_config_input();
         let auth = self.auth_manager.auth().await;
-        plugins_manager.set_auth_mode(auth.as_ref().map(CodexAuth::api_auth_mode));
+        plugins_manager.set_auth_mode(auth.as_ref().map(CodexAuth::plugin_routing_auth_mode));
 
         let plugin = match read_source {
             Ok(marketplace_path) => {
@@ -1488,7 +1488,7 @@ impl PluginRequestProcessor {
 
         let plugin_mcp_servers = load_plugin_mcp_servers(
             result.installed_path.as_path(),
-            auth.as_ref().map(CodexAuth::auth_mode),
+            auth.as_ref().map(CodexAuth::plugin_routing_auth_mode),
         )
         .await;
         if !plugin_mcp_servers.is_empty() {
@@ -1659,7 +1659,7 @@ impl PluginRequestProcessor {
 
         let plugin_mcp_servers = load_plugin_mcp_servers(
             result.installed_path.as_path(),
-            auth.as_ref().map(CodexAuth::auth_mode),
+            auth.as_ref().map(CodexAuth::plugin_routing_auth_mode),
         )
         .await;
         if !plugin_mcp_servers.is_empty() {

@@ -510,6 +510,16 @@ impl CodexAuth {
             Self::BedrockApiKey(_) => AuthMode::BedrockApiKey,
         }
     }
+    /// Returns an auth mode suitable for mode-only plugin/App MCP route gates.
+    ///
+    /// Externally provided auth can opt into Codex backend routes without
+    /// claiming to be a ChatGPT account everywhere else.
+    pub fn plugin_routing_auth_mode(&self) -> AuthMode {
+        match self {
+            Self::ExternalProvided(auth) if auth.uses_codex_backend() => AuthMode::Chatgpt,
+            _ => self.api_auth_mode(),
+        }
+    }
 
     pub fn is_api_key_auth(&self) -> bool {
         self.auth_mode() == AuthMode::ApiKey
@@ -2321,6 +2331,7 @@ impl AuthManager {
                 return;
             }
             if !self.install_external_auth_snapshot(snapshot) {
+                self.clear_external_auth();
                 return;
             }
         }
@@ -2352,6 +2363,9 @@ impl AuthManager {
         if let Ok(mut guard) = self.external_auth.write() {
             *guard = None;
         }
+        if matches!(self.auth_cached(), Some(CodexAuth::ExternalProvided(_))) {
+            let _ = self.set_cached_auth(None);
+        }
     }
 
     pub fn set_forced_chatgpt_workspace_id(&self, workspace_id: Option<Vec<String>>) {
@@ -2377,6 +2391,13 @@ impl AuthManager {
         self.auth_cached()
             .as_ref()
             .is_some_and(CodexAuth::is_external_chatgpt_tokens)
+    }
+    pub fn is_external_auth_snapshot_active(&self) -> bool {
+        matches!(self.auth_cached(), Some(CodexAuth::ExternalProvided(_)))
+    }
+
+    pub fn is_external_auth_active(&self) -> bool {
+        self.is_external_chatgpt_auth_active() || self.is_external_auth_snapshot_active()
     }
 
     pub fn codex_api_key_env_enabled(&self) -> bool {
@@ -2479,10 +2500,11 @@ impl AuthManager {
             ))
         })?;
         let auth_before_reload = self.auth_cached();
-        if auth_before_reload
-            .as_ref()
-            .is_some_and(|auth| auth.is_api_key_auth() || auth.is_personal_access_token_auth())
-        {
+        if auth_before_reload.as_ref().is_some_and(|auth| {
+            auth.is_api_key_auth()
+                || auth.is_personal_access_token_auth()
+                || matches!(auth, CodexAuth::ExternalProvided(_))
+        }) {
             return Ok(());
         }
         let expected_account_id = auth_before_reload
@@ -2599,6 +2621,16 @@ impl AuthManager {
             return Some(AuthMode::ApiKey);
         }
         self.auth_cached().as_ref().map(CodexAuth::api_auth_mode)
+    }
+
+    /// Returns an auth mode suitable for mode-only plugin/App MCP route gates.
+    pub fn get_plugin_routing_auth_mode(&self) -> Option<AuthMode> {
+        if self.has_external_api_key_auth() {
+            return Some(AuthMode::ApiKey);
+        }
+        self.auth_cached()
+            .as_ref()
+            .map(CodexAuth::plugin_routing_auth_mode)
     }
 
     /// Returns the effective backend auth mode for the current authentication.

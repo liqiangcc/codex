@@ -174,7 +174,7 @@ impl AccountRequestProcessor {
         self.auth_manager.clear_external_auth();
         self.thread_manager
             .plugins_manager()
-            .set_auth_mode(self.auth_manager.get_api_auth_mode());
+            .set_auth_mode(self.auth_manager.get_plugin_routing_auth_mode());
     }
 
     fn current_account_updated_notification(&self) -> AccountUpdatedNotification {
@@ -195,7 +195,7 @@ impl AccountRequestProcessor {
     ) {
         thread_manager
             .plugins_manager()
-            .set_auth_mode(auth.as_ref().map(CodexAuth::api_auth_mode));
+            .set_auth_mode(auth.as_ref().map(CodexAuth::plugin_routing_auth_mode));
         thread_manager
             .plugins_manager()
             .clear_recommended_plugins_cache();
@@ -280,7 +280,7 @@ impl AccountRequestProcessor {
 
     fn external_auth_active_error(&self) -> JSONRPCErrorError {
         invalid_request(
-            "External auth is active. Use account/login/start (chatgptAuthTokens) to update it or account/logout to clear it.",
+            "External auth is active. Use account/logout to clear it before starting another login.",
         )
     }
 
@@ -288,7 +288,7 @@ impl AccountRequestProcessor {
         &self,
         params: &LoginApiKeyParams,
     ) -> std::result::Result<(), JSONRPCErrorError> {
-        if self.auth_manager.is_external_chatgpt_auth_active() {
+        if self.auth_manager.is_external_auth_active() {
             return Err(self.external_auth_active_error());
         }
 
@@ -344,7 +344,7 @@ impl AccountRequestProcessor {
     ) -> std::result::Result<LoginServerOptions, JSONRPCErrorError> {
         let config = self.config.as_ref();
 
-        if self.auth_manager.is_external_chatgpt_auth_active() {
+        if self.auth_manager.is_external_auth_active() {
             return Err(self.external_auth_active_error());
         }
 
@@ -592,6 +592,10 @@ impl AccountRequestProcessor {
         chatgpt_account_id: String,
         chatgpt_plan_type: Option<String>,
     ) -> Result<LoginAccountResponse, JSONRPCErrorError> {
+        if self.auth_manager.is_external_auth_snapshot_active() {
+            return Err(self.external_auth_active_error());
+        }
+
         if matches!(
             self.config.forced_login_method,
             Some(ForcedLoginMethod::Api)
@@ -765,7 +769,7 @@ impl AccountRequestProcessor {
     }
 
     async fn refresh_token_if_requested(&self, do_refresh: bool) -> RefreshTokenRequestOutcome {
-        if self.auth_manager.is_external_chatgpt_auth_active() {
+        if self.auth_manager.is_external_auth_active() {
             return RefreshTokenRequestOutcome::NotAttemptedOrSucceeded;
         }
         if do_refresh && let Err(err) = self.auth_manager.refresh_token().await {
@@ -810,30 +814,30 @@ impl AccountRequestProcessor {
                     let permanent_refresh_failure =
                         self.auth_manager.refresh_failure_for_auth(&auth).is_some();
                     let auth_mode = auth_mode_to_api(auth.api_auth_mode());
-                    let (reported_auth_method, token_opt) = if matches!(
-                        auth,
-                        CodexAuth::ExternalProvided(_)
-                            | CodexAuth::AgentIdentity(_)
-                            | CodexAuth::PersonalAccessToken(_)
-                    ) || include_token
-                        && permanent_refresh_failure
-                    {
-                        // This response cannot represent the metadata needed to reuse these
-                        // credentials.
-                        (Some(auth_mode), None)
-                    } else {
-                        match auth.get_token() {
-                            Ok(token) if !token.is_empty() => {
-                                let tok = if include_token { Some(token) } else { None };
-                                (Some(auth_mode), tok)
+                    let (reported_auth_method, token_opt) =
+                        if matches!(auth, CodexAuth::ExternalProvided(_)) {
+                            (None, None)
+                        } else if matches!(
+                            auth,
+                            CodexAuth::AgentIdentity(_) | CodexAuth::PersonalAccessToken(_)
+                        ) || include_token && permanent_refresh_failure
+                        {
+                            // This response cannot represent the metadata needed to reuse these
+                            // credentials.
+                            (Some(auth_mode), None)
+                        } else {
+                            match auth.get_token() {
+                                Ok(token) if !token.is_empty() => {
+                                    let tok = if include_token { Some(token) } else { None };
+                                    (Some(auth_mode), tok)
+                                }
+                                Ok(_) => (None, None),
+                                Err(err) => {
+                                    tracing::warn!("failed to get token for auth status: {err}");
+                                    (None, None)
+                                }
                             }
-                            Ok(_) => (None, None),
-                            Err(err) => {
-                                tracing::warn!("failed to get token for auth status: {err}");
-                                (None, None)
-                            }
-                        }
-                    };
+                        };
                     GetAuthStatusResponse {
                         auth_method: reported_auth_method,
                         auth_token: token_opt,

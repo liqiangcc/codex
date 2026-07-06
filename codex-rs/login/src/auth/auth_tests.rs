@@ -54,6 +54,48 @@ fn externally_provided_auth_respects_forced_workspace() {
         manager.auth_cached(),
         Some(CodexAuth::ExternalProvided(_))
     ));
+    assert_eq!(
+        manager.get_plugin_routing_auth_mode(),
+        Some(AuthMode::Chatgpt)
+    );
+
+    manager.set_external_auth(Arc::new(backend_auth(WORKSPACE_ID_DISALLOWED)));
+    assert!(manager.auth_cached().is_none());
+}
+
+#[test]
+fn clearing_externally_provided_auth_clears_cached_snapshot() {
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("sk-test"));
+    manager.set_external_auth(Arc::new(ExternalAuthSnapshot::new([], "user-123")));
+
+    assert!(matches!(
+        manager.auth_cached(),
+        Some(CodexAuth::ExternalProvided(_))
+    ));
+    assert_eq!(
+        manager.get_plugin_routing_auth_mode(),
+        Some(AuthMode::ExternalProvided)
+    );
+
+    manager.clear_external_auth();
+
+    assert!(manager.auth_cached().is_none());
+}
+
+#[tokio::test]
+async fn externally_provided_auth_refresh_does_not_reload_storage() {
+    let auth = ExternalAuthSnapshot::new([], "user-123").with_account_id("account-123");
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::ExternalProvided(auth));
+
+    manager
+        .refresh_token()
+        .await
+        .expect("external auth refresh should be a no-op");
+
+    assert!(matches!(
+        manager.auth_cached(),
+        Some(CodexAuth::ExternalProvided(_))
+    ));
 }
 
 #[tokio::test]

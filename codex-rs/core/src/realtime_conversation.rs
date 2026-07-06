@@ -28,7 +28,6 @@ use codex_login::CodexAuth;
 use codex_login::default_client::default_headers;
 use codex_login::read_openai_api_key_from_env;
 use codex_model_provider_info::ModelProviderInfo;
-use codex_protocol::auth::AuthMode;
 use codex_protocol::error::CodexErr;
 use codex_protocol::error::Result as CodexResult;
 use codex_protocol::models::MessagePhase;
@@ -748,13 +747,13 @@ async fn prepare_realtime_start(
         .transport
         .clone()
         .unwrap_or(ConversationStartTransport::Websocket);
-    let mut api_provider = provider.to_api_provider(Some(AuthMode::ApiKey))?;
+    let mut api_provider = provider.to_api_provider(/*uses_codex_backend*/ false)?;
     if let Some(realtime_ws_base_url) = &config.experimental_realtime_ws_base_url {
         api_provider.base_url = realtime_ws_base_url.clone();
     }
     let realtime_call_api_provider =
         if let Some(realtime_call_base_url) = &config.experimental_realtime_webrtc_call_base_url {
-            let mut api_provider = provider.to_api_provider(Some(AuthMode::ApiKey))?;
+            let mut api_provider = provider.to_api_provider(/*uses_codex_backend*/ false)?;
             api_provider.base_url = realtime_call_base_url.clone();
             Some(api_provider)
         } else {
