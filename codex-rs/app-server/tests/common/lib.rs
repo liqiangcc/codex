@@ -4,6 +4,7 @@ mod analytics_server;
 mod auth_fixtures;
 mod config;
 mod json_logging;
+mod local_websocket_exec_server;
 mod mock_model_server;
 mod models_cache;
 mod responses;

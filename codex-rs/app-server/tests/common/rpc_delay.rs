@@ -1,83 +1,33 @@
 use std::io;
-use std::net::SocketAddr;
-use std::path::Path;
-use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWrite;
 use tokio::io::AsyncWriteExt;
-use tokio::io::BufReader;
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
-use tokio::process::Child;
-use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 use tokio::time::sleep_until;
-use tokio::time::timeout;
+use url::Host;
+use url::Url;
 
-const EXEC_SERVER_START_TIMEOUT: Duration = Duration::from_secs(10);
 const FORWARD_BUFFER_BYTES: usize = 64 * 1024;
 const FORWARD_QUEUE_CHUNKS: usize = 16;
 
-pub(crate) struct DelayedExecServer {
-    _exec_server: Child,
-    interposer: TcpDelayInterposer,
-}
-
-impl DelayedExecServer {
-    pub(crate) async fn start(codex_home: &Path, added_delay: Duration) -> Result<Self> {
-        let mut child = local_exec_server_command()?;
-        child.stdin(Stdio::null());
-        child.stdout(Stdio::piped());
-        child.stderr(Stdio::inherit());
-        child.current_dir(codex_home);
-        child.env("CODEX_HOME", codex_home);
-        child.kill_on_drop(true);
-        let mut child = child.spawn().context("start local exec-server fixture")?;
-        let upstream_url = read_exec_server_url(&mut child).await?;
-        let interposer = TcpDelayInterposer::start(&upstream_url, added_delay).await?;
-        Ok(Self {
-            _exec_server: child,
-            interposer,
-        })
-    }
-
-    pub(crate) fn websocket_url(&self) -> &str {
-        self.interposer.websocket_url()
-    }
-}
-
-fn local_exec_server_command() -> Result<Command> {
-    if let Ok(exec_server) = codex_utils_cargo_bin::cargo_bin("exec-server") {
-        return Ok(Command::new(exec_server));
-    }
-
-    // Cargo-backed functional tests do not build the Bazel-only fixture
-    // binary. Keep their existing CLI fallback while Bazel benchmarks inject
-    // CARGO_BIN_EXE_exec-server explicitly.
-    let codex = codex_utils_cargo_bin::cargo_bin("codex")
-        .context("should find binary for local exec-server fixture")?;
-    let mut command = Command::new(codex);
-    command.args(["exec-server", "--listen", "ws://127.0.0.1:0"]);
-    Ok(command)
-}
-
-struct TcpDelayInterposer {
+pub(crate) struct WebsocketDelayInterposer {
     websocket_url: String,
     accept_task: JoinHandle<()>,
 }
 
-impl TcpDelayInterposer {
-    async fn start(upstream_url: &str, added_delay: Duration) -> Result<Self> {
-        let upstream = websocket_socket_addr(upstream_url)?;
+impl WebsocketDelayInterposer {
+    pub(crate) async fn start(upstream_url: &str, added_delay: Duration) -> Result<Self> {
+        let upstream = websocket_authority(upstream_url)?;
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .context("bind RPC delay interposer")?;
@@ -87,6 +37,7 @@ impl TcpDelayInterposer {
                 let Ok((downstream, _peer)) = listener.accept().await else {
                     break;
                 };
+                let upstream = upstream.clone();
                 tokio::spawn(async move {
                     let Ok(upstream) = TcpStream::connect(upstream).await else {
                         return;
@@ -101,50 +52,34 @@ impl TcpDelayInterposer {
         })
     }
 
-    fn websocket_url(&self) -> &str {
+    pub(crate) fn websocket_url(&self) -> &str {
         &self.websocket_url
     }
 }
 
-impl Drop for TcpDelayInterposer {
+impl Drop for WebsocketDelayInterposer {
     fn drop(&mut self) {
         self.accept_task.abort();
     }
 }
 
-async fn read_exec_server_url(child: &mut Child) -> Result<String> {
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| anyhow!("local exec-server fixture stdout was not captured"))?;
-    let mut lines = BufReader::new(stdout).lines();
-    let deadline = Instant::now() + EXEC_SERVER_START_TIMEOUT;
-
-    loop {
-        let remaining = deadline
-            .checked_duration_since(Instant::now())
-            .ok_or_else(|| anyhow!("timed out waiting for local exec-server listen URL"))?;
-        let line = timeout(remaining, lines.next_line())
-            .await
-            .map_err(|_| anyhow!("timed out waiting for local exec-server listen URL"))??
-            .ok_or_else(|| anyhow!("local exec-server exited before emitting its listen URL"))?;
-        let listen_url = line.trim();
-        if listen_url.starts_with("ws://") {
-            return Ok(listen_url.to_string());
-        }
+fn websocket_authority(websocket_url: &str) -> Result<String> {
+    let websocket_url = Url::parse(websocket_url).context("parse RPC delay upstream URL")?;
+    if websocket_url.scheme() != "ws" {
+        return Err(anyhow!("RPC delay requires a ws:// exec-server URL"));
     }
-}
-
-fn websocket_socket_addr(websocket_url: &str) -> Result<SocketAddr> {
-    let authority = websocket_url
-        .strip_prefix("ws://")
-        .ok_or_else(|| anyhow!("RPC delay requires a ws:// exec-server URL"))?
-        .split('/')
-        .next()
-        .ok_or_else(|| anyhow!("RPC delay exec-server URL has no authority"))?;
-    authority
-        .parse()
-        .with_context(|| format!("parse RPC delay upstream address {authority}"))
+    let host = websocket_url
+        .host()
+        .ok_or_else(|| anyhow!("RPC delay exec-server URL has no host"))?;
+    let port = websocket_url
+        .port_or_known_default()
+        .ok_or_else(|| anyhow!("RPC delay exec-server URL has no port"))?;
+    let host = match host {
+        Host::Domain(host) => host.to_string(),
+        Host::Ipv4(host) => host.to_string(),
+        Host::Ipv6(host) => format!("[{host}]"),
+    };
+    Ok(format!("{host}:{port}"))
 }
 
 async fn proxy_connection(
@@ -169,6 +104,10 @@ where
     R: AsyncRead + Unpin + Send + 'static,
     W: AsyncWrite + Unpin + Send + 'static,
 {
+    // tokio::io::copy would wait before reading the next chunk, turning a
+    // fixed propagation delay into a bandwidth limit. Timestamping reads into
+    // a bounded queue lets close-together chunks emerge close together after
+    // the same delay while still applying backpressure.
     let (tx, mut rx) = mpsc::channel::<DelayedChunk>(FORWARD_QUEUE_CHUNKS);
     let reader_task = tokio::spawn(async move {
         loop {

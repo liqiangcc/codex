@@ -99,6 +99,14 @@ bench *args:
 bench-smoke:
     just bench -- --test
 
+# Run Bazel-backed end-to-end macrobenchmarks with optimized binaries.
+bench-e2e:
+    bazel test --compilation_mode=opt --cache_test_results=no --test_output=streamed //codex-rs/app-server:cold-skill-load-bench
+
+# Run Bazel-backed end-to-end macrobenchmarks once per case.
+bench-e2e-smoke:
+    bazel test --compilation_mode=opt --cache_test_results=no --test_output=streamed --test_arg=--test //codex-rs/app-server:cold-skill-load-bench
+
 # Build and run Codex from source using Bazel.
 # On Unix, use `[no-cd]` and `--run_under="cd $PWD &&"` to ensure Bazel runs
 # the command in the current working directory.

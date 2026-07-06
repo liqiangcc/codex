@@ -3,6 +3,8 @@ name = "codex-app-server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+# App-server benchmarks are Bazel-only targets rather than Cargo benches.
+autobenches = false
 
 [[bin]]
 name = "codex-app-server"
@@ -114,7 +116,6 @@ base64 = { workspace = true }
 codex-model-provider-info = { workspace = true }
 codex-utils-cargo-bin = { workspace = true }
 core_test_support = { workspace = true }
-divan = { workspace = true }
 flate2 = { workspace = true }
 hmac = { workspace = true }
 opentelemetry = { workspace = true }
@@ -134,7 +135,3 @@ tokio-tungstenite = { workspace = true }
 tracing-opentelemetry = { workspace = true }
 url = { workspace = true }
 wiremock = { workspace = true }
-
-[[bench]]
-name = "cold_thread_start"
-harness = false

@@ -27,6 +27,7 @@ codex-protocol = { workspace = true }
 codex-utils-cargo-bin = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tempfile = { workspace = true }
 tokio = { workspace = true, features = [
     "io-util",
     "io-std",
@@ -37,6 +38,7 @@ tokio = { workspace = true, features = [
     "sync",
     "time",
 ] }
+url = { workspace = true }
 uuid = { workspace = true }
 wiremock = { workspace = true }
 core_test_support = { path = "../../../core/tests/common" }

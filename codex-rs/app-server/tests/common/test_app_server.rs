@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::ExitStatus;
 use std::process::Stdio;
 use std::sync::atomic::AtomicI64;
@@ -124,10 +125,12 @@ use codex_login::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use core_test_support::is_remote_test_environment;
 use core_test_support::test_codex::TestEnv;
 use core_test_support::test_codex::test_env;
+use tempfile::TempDir;
 use tokio::process::Command;
 
 use crate::json_logging::JsonLogCapture;
-use crate::rpc_delay::DelayedExecServer;
+use crate::local_websocket_exec_server::LocalWebsocketExecServer;
+use crate::rpc_delay::WebsocketDelayInterposer;
 
 pub struct TestAppServer {
     next_request_id: AtomicI64,
@@ -141,19 +144,24 @@ pub struct TestAppServer {
     pending_messages: VecDeque<JSONRPCMessage>,
     auto_env: Option<TestEnv>,
     json_logs: JsonLogCapture,
-    _delayed_exec_server: Option<DelayedExecServer>,
+    codex_home: PathBuf,
+    _owned_codex_home: Option<TempDir>,
+    _local_websocket_exec_server: Option<LocalWebsocketExecServer>,
+    _exec_server_delay: Option<WebsocketDelayInterposer>,
 }
 
 pub const DEFAULT_CLIENT_NAME: &str = "codex-app-server-tests";
 pub const DISABLE_PLUGIN_STARTUP_TASKS_ARG: &str = "--disable-plugin-startup-tasks-for-tests";
 const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "CODEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
+const DEFAULT_APP_SERVER_ARGS: &[&str] = &[DISABLE_PLUGIN_STARTUP_TASKS_ARG];
 
 impl TestAppServer {
     /// Starts building a server with the standard automatic test environment.
-    pub fn builder(codex_home: &Path) -> TestAppServerBuilder<'_> {
+    pub fn builder() -> TestAppServerBuilder {
         TestAppServerBuilder {
-            codex_home,
+            codex_home: None,
             exec_server_delay: None,
+            app_server_args: DEFAULT_APP_SERVER_ARGS,
         }
     }
 
@@ -162,7 +170,7 @@ impl TestAppServer {
     }
 
     pub async fn new(codex_home: &Path) -> anyhow::Result<Self> {
-        Self::new_with_env_and_args(codex_home, &[], &[DISABLE_PLUGIN_STARTUP_TASKS_ARG]).await
+        Self::new_with_env_and_args(codex_home, &[], DEFAULT_APP_SERVER_ARGS).await
     }
 
     /// Starts an app server with the standard test environment and retains it
@@ -176,7 +184,7 @@ impl TestAppServer {
     /// URL-based configuration, this helper rejects a `codex_home` containing
     /// that file.
     pub async fn new_with_auto_env(codex_home: &Path) -> anyhow::Result<Self> {
-        Self::builder(codex_home).build().await
+        Self::builder().with_codex_home(codex_home).build().await
     }
 
     /// Starts an auto-environment app server that emits JSON logs.
@@ -204,6 +212,7 @@ impl TestAppServer {
         Self::new_with_auto_env_options(
             codex_home,
             /*exec_server_delay*/ None,
+            DEFAULT_APP_SERVER_ARGS,
             extra_env_overrides,
         )
         .await
@@ -212,6 +221,7 @@ impl TestAppServer {
     async fn new_with_auto_env_options(
         codex_home: &Path,
         exec_server_delay: Option<Duration>,
+        app_server_args: &[&str],
         extra_env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
         let environments_toml = codex_home.join("environments.toml");
@@ -223,21 +233,25 @@ impl TestAppServer {
             environments_toml.display()
         );
 
-        let (auto_env, delayed_exec_server) = match exec_server_delay {
-            Some(exec_server_delay) => {
+        let (auto_env, local_exec_server, exec_server_delay) = match exec_server_delay {
+            Some(added_delay) => {
                 assert!(
                     !is_remote_test_environment(),
                     "TestAppServer exec-server delay only supports the local test environment"
                 );
-                let delayed_exec_server =
-                    DelayedExecServer::start(codex_home, exec_server_delay).await?;
-                let auto_env = TestEnv::local_with_exec_server_url(
-                    delayed_exec_server.websocket_url().to_string(),
-                )
-                .await?;
-                (auto_env, Some(delayed_exec_server))
+                // Local auto environments normally use stdio. Start a
+                // host-local WebSocket fixture so the delay interposer has a
+                // socket stream to wrap.
+                let local_exec_server = LocalWebsocketExecServer::start(codex_home).await?;
+                let interposer =
+                    WebsocketDelayInterposer::start(local_exec_server.websocket_url(), added_delay)
+                        .await?;
+                let auto_env =
+                    TestEnv::local_with_exec_server_url(interposer.websocket_url().to_string())
+                        .await?;
+                (auto_env, Some(local_exec_server), Some(interposer))
             }
-            None => (test_env().await?, None),
+            None => (test_env().await?, None, None),
         };
         // Noise registry configuration takes precedence over the URL-based
         // provider, so clear inherited values to keep the selection hermetic.
@@ -252,9 +266,11 @@ impl TestAppServer {
             (CODEX_EXEC_SERVER_NOISE_CHATGPT_ACCOUNT_ID_ENV_VAR, None),
         ];
         env_overrides.extend_from_slice(extra_env_overrides);
-        let mut app_server = Self::new_with_env(codex_home, &env_overrides).await?;
+        let mut app_server =
+            Self::new_with_env_and_args(codex_home, &env_overrides, app_server_args).await?;
         app_server.auto_env = Some(auto_env);
-        app_server._delayed_exec_server = delayed_exec_server;
+        app_server._local_websocket_exec_server = local_exec_server;
+        app_server._exec_server_delay = exec_server_delay;
         Ok(app_server)
     }
 
@@ -277,6 +293,11 @@ impl TestAppServer {
             environment_id: selection.environment_id.clone(),
             cwd: selection.cwd.clone().into(),
         })
+    }
+
+    /// Returns the effective CODEX_HOME used by the child app-server.
+    pub fn codex_home(&self) -> &Path {
+        &self.codex_home
     }
 
     /// Waits for a JSON stderr event whose structured `event.name` field matches.
@@ -326,7 +347,7 @@ impl TestAppServer {
     }
 
     pub async fn new_with_args(codex_home: &Path, args: &[&str]) -> anyhow::Result<Self> {
-        let mut all_args = vec![DISABLE_PLUGIN_STARTUP_TASKS_ARG];
+        let mut all_args = DEFAULT_APP_SERVER_ARGS.to_vec();
         all_args.extend_from_slice(args);
         Self::new_with_env_and_args(codex_home, &[], &all_args).await
     }
@@ -340,12 +361,7 @@ impl TestAppServer {
         codex_home: &Path,
         env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
-        Self::new_with_env_and_args(
-            codex_home,
-            env_overrides,
-            &[DISABLE_PLUGIN_STARTUP_TASKS_ARG],
-        )
-        .await
+        Self::new_with_env_and_args(codex_home, env_overrides, DEFAULT_APP_SERVER_ARGS).await
     }
 
     pub async fn new_with_program_and_env(
@@ -357,7 +373,7 @@ impl TestAppServer {
             codex_home,
             program,
             env_overrides,
-            &[DISABLE_PLUGIN_STARTUP_TASKS_ARG],
+            DEFAULT_APP_SERVER_ARGS,
         )
         .await
     }
@@ -440,7 +456,10 @@ impl TestAppServer {
             pending_messages: VecDeque::new(),
             auto_env: None,
             json_logs,
-            _delayed_exec_server: None,
+            codex_home: codex_home.to_path_buf(),
+            _owned_codex_home: None,
+            _local_websocket_exec_server: None,
+            _exec_server_delay: None,
         })
     }
 
@@ -1834,26 +1853,63 @@ impl TestAppServer {
     }
 }
 
-/// Builds a TestAppServer with the standard automatic environment by default.
-///
-/// RPC delay is intentionally local-only for now. Enabling it switches the
-/// automatic environment onto a localhost WebSocket exec-server so a TCP
-/// interposer can add a fixed delay to the app-server/exec-server RPC stream.
-pub struct TestAppServerBuilder<'a> {
-    codex_home: &'a Path,
+/// Builder for TestAppServer.
+pub struct TestAppServerBuilder {
+    codex_home: Option<PathBuf>,
     exec_server_delay: Option<Duration>,
+    app_server_args: &'static [&'static str],
 }
 
-impl<'a> TestAppServerBuilder<'a> {
-    /// Adds this fixed one-way delay to the localhost app-server/exec-server
-    /// RPC stream. A 15ms delay contributes roughly 30ms to a round trip.
+impl TestAppServerBuilder {
+    /// Uses this existing CODEX_HOME instead of a temporary one.
+    pub fn with_codex_home(mut self, codex_home: &Path) -> Self {
+        self.codex_home = Some(codex_home.to_path_buf());
+        self
+    }
+
+    /// Adds this fixed one-way delay to the app-server/exec-server RPC stream.
+    /// A 15ms delay contributes roughly 30ms to a round trip.
     pub fn with_exec_server_delay(mut self, exec_server_delay: Duration) -> Self {
         self.exec_server_delay = Some(exec_server_delay);
         self
     }
 
+    /// Omits debug-only flags that TestAppServer normally passes to app-server.
+    ///
+    /// Optimized Bazel macrobenchmarks use this because their app-server child
+    /// does not expose the debug-only test hooks.
+    pub fn without_debug_only_test_args(mut self) -> Self {
+        self.app_server_args = &[];
+        self
+    }
+
+    /// Builds a server with the standard automatic test environment and a
+    /// temporary CODEX_HOME by default.
     pub async fn build(self) -> anyhow::Result<TestAppServer> {
-        TestAppServer::new_with_auto_env_options(self.codex_home, self.exec_server_delay, &[]).await
+        let Self {
+            codex_home,
+            exec_server_delay,
+            app_server_args,
+        } = self;
+        let (codex_home, owned_codex_home) = match codex_home {
+            Some(codex_home) => (codex_home, None),
+            None => {
+                let owned_codex_home = TempDir::new()?;
+                (
+                    owned_codex_home.path().to_path_buf(),
+                    Some(owned_codex_home),
+                )
+            }
+        };
+        let mut app_server = TestAppServer::new_with_auto_env_options(
+            &codex_home,
+            exec_server_delay,
+            app_server_args,
+            &[],
+        )
+        .await?;
+        app_server._owned_codex_home = owned_codex_home;
+        Ok(app_server)
     }
 }
 

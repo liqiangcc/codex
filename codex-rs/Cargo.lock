@@ -412,7 +412,9 @@ dependencies = [
  "serde",
  "serde_json",
  "shlex",
+ "tempfile",
  "tokio",
+ "url",
  "uuid",
  "wiremock",
 ]
@@ -2022,7 +2024,6 @@ dependencies = [
  "codex-web-search-extension",
  "codex-windows-sandbox",
  "core_test_support",
- "divan",
  "flate2",
  "futures",
  "hmac 0.12.1",

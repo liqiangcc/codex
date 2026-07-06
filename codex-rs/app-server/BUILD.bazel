@@ -7,6 +7,7 @@ codex_rust_crate(
     crate_name = "codex_app_server",
     extra_binaries = [
         "//codex-rs/bwrap:bwrap",
+        "//codex-rs/exec-server/testing:exec-server",
     ],
     extra_binaries_non_windows = [
         "//codex-rs/cli:codex",
@@ -28,11 +29,11 @@ codex_rust_crate(
 )
 
 rust_binary(
-    name = "cold-thread-start-bench-bin",
+    name = "cold-skill-load-bench-bin",
     testonly = True,
-    srcs = ["benches/cold_thread_start.rs"],
-    crate_name = "cold_thread_start_bench",
-    crate_root = "benches/cold_thread_start.rs",
+    srcs = ["benches/cold_skill_load.rs"],
+    crate_name = "cold_skill_load_bench",
+    crate_root = "benches/cold_skill_load.rs",
     data = [
         ":codex-app-server",
         "//codex-rs/exec-server/testing:exec-server",
@@ -47,16 +48,25 @@ rust_binary(
 )
 
 workspace_root_test(
-    name = "cold-thread-start-bench",
-    args = ["cold_thread_start"],
+    name = "cold-skill-load-bench",
+    args = [
+        "--bench",
+        "cold_skill_load",
+    ],
     data = [
         ":codex-app-server",
         "//codex-rs/exec-server/testing:exec-server",
     ],
+    # TODO(anp): Reconcile this with codex_rust_crate's integration-test
+    # setup when we add more standalone Divan benchmarks.
+    # `codex_rust_crate` wires CARGO_BIN_EXE_* automatically only for its
+    # generated integration tests. This standalone Divan binary needs the
+    # workspace-root launcher to resolve its runfiles explicitly.
     runfile_env = {
         ":codex-app-server": "CARGO_BIN_EXE_codex-app-server",
         "//codex-rs/exec-server/testing:exec-server": "CARGO_BIN_EXE_exec-server",
     },
-    test_bin = ":cold-thread-start-bench-bin",
+    tags = ["manual"],
+    test_bin = ":cold-skill-load-bench-bin",
     workspace_root_marker = "//codex-rs/utils/cargo-bin:repo_root.marker",
 )
