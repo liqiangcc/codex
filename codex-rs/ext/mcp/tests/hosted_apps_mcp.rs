@@ -10,8 +10,8 @@ use codex_extension_api::McpServerContribution;
 use codex_extension_api::McpServerContributionContext;
 use codex_extension_api::McpServerContributor;
 use codex_login::CodexAuth;
-use codex_login::ExternalProvidedAuth;
-use codex_login::ExternalProvidedAuthCapabilities;
+use codex_login::ExternalAuthSnapshot;
+use codex_login::ExternalAuthSnapshotCapabilities;
 use codex_mcp::CODEX_APPS_MCP_SERVER_NAME;
 use pretty_assertions::assert_eq;
 
@@ -158,8 +158,8 @@ async fn hosted_apps_mcp_accepts_external_provided_codex_auth() -> TestResult {
         .build()
         .await?;
     let auth =
-        CodexAuth::ExternalProvided(ExternalProvidedAuth::new([], "user-123").with_capabilities(
-            ExternalProvidedAuthCapabilities {
+        CodexAuth::ExternalProvided(ExternalAuthSnapshot::new([], "user-123").with_capabilities(
+            ExternalAuthSnapshotCapabilities {
                 uses_codex_backend: true,
                 ..Default::default()
             },

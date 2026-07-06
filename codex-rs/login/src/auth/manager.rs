@@ -41,7 +41,7 @@ use super::revoke::revoke_auth_tokens;
 pub use crate::auth::agent_identity::AgentIdentityAuth;
 pub use crate::auth::agent_identity::AgentIdentityAuthError;
 pub use crate::auth::bedrock_api_key::BedrockApiKeyAuth;
-use crate::auth::external_provided::ExternalProvidedAuth;
+use crate::auth::external_auth_snapshot::ExternalAuthSnapshot;
 pub use crate::auth::personal_access_token::PersonalAccessTokenAuth;
 pub use crate::auth::storage::AgentIdentityAuthRecord;
 pub use crate::auth::storage::AgentIdentityStorage;
@@ -72,7 +72,7 @@ pub enum CodexAuth {
     ApiKey(ApiKeyAuth),
     Chatgpt(ChatgptAuth),
     ChatgptAuthTokens(ChatgptAuthTokens),
-    ExternalProvided(ExternalProvidedAuth),
+    ExternalProvided(ExternalAuthSnapshot),
     AgentIdentity(AgentIdentityAuth),
     PersonalAccessToken(PersonalAccessTokenAuth),
     BedrockApiKey(BedrockApiKeyAuth),
@@ -253,11 +253,17 @@ pub struct ExternalAuthRefreshContext {
 
 /// Pluggable auth provider used by `AuthManager` for externally managed auth flows.
 ///
-/// Implementations may either resolve auth eagerly via `resolve()` or provide refreshed
-/// credentials on demand via `refresh()`.
+/// Implementations may expose an immutable snapshot, resolve auth eagerly via `resolve()`,
+/// or provide refreshed credentials on demand via `refresh()`.
 pub trait ExternalAuth: Send + Sync {
     /// Indicates which top-level auth mode this external provider supplies.
     fn auth_mode(&self) -> AuthMode;
+
+    /// Returns an already-materialized auth snapshot, when this provider does
+    /// not use bearer-token resolution or refresh.
+    fn snapshot(&self) -> Option<ExternalAuthSnapshot> {
+        None
+    }
 
     /// Returns cached or immediately available auth, if this provider can resolve it synchronously
     /// from the caller's perspective.
@@ -268,8 +274,24 @@ pub trait ExternalAuth: Send + Sync {
     /// Refreshes auth in response to a manager-driven refresh attempt.
     fn refresh(
         &self,
-        context: ExternalAuthRefreshContext,
-    ) -> ExternalAuthFuture<'_, ExternalAuthTokens>;
+        _context: ExternalAuthRefreshContext,
+    ) -> ExternalAuthFuture<'_, ExternalAuthTokens> {
+        Box::pin(async {
+            Err(std::io::Error::other(
+                "external auth provider does not support refresh",
+            ))
+        })
+    }
+}
+
+impl ExternalAuth for ExternalAuthSnapshot {
+    fn auth_mode(&self) -> AuthMode {
+        AuthMode::ExternalProvided
+    }
+
+    fn snapshot(&self) -> Option<ExternalAuthSnapshot> {
+        Some(self.clone())
+    }
 }
 
 pub type ExternalAuthFuture<'a, T> = Pin<Box<dyn Future<Output = std::io::Result<T>> + Send + 'a>>;
@@ -1866,7 +1888,7 @@ pub trait AuthManagerConfig {
     /// Returns in-memory auth supplied by a trusted embedding runtime.
     ///
     /// Implementations must not populate this from user-controlled config.
-    fn external_provided_auth(&self) -> Option<ExternalProvidedAuth> {
+    fn external_auth_snapshot(&self) -> Option<ExternalAuthSnapshot> {
         None
     }
 }
@@ -2290,14 +2312,24 @@ impl AuthManager {
         }
     }
 
-    pub fn set_external_auth(&self, external_auth: Arc<dyn ExternalAuth>) {
+    pub fn set_external_auth(&self, external_auth: Arc<dyn ExternalAuth>) -> bool {
+        if let Some(snapshot) = external_auth.snapshot() {
+            if external_auth.auth_mode() != AuthMode::ExternalProvided {
+                tracing::warn!("ignoring external auth snapshot from incompatible provider mode");
+                return false;
+            }
+            if !self.install_external_auth_snapshot(snapshot) {
+                return false;
+            }
+        }
         if let Ok(mut guard) = self.external_auth.write() {
             *guard = Some(external_auth);
         }
+        true
     }
 
-    /// Replaces the current auth snapshot with externally provided auth.
-    pub fn set_external_provided_auth(&self, auth: ExternalProvidedAuth) -> bool {
+    /// Replaces the current auth snapshot with a snapshot from an external provider.
+    fn install_external_auth_snapshot(&self, auth: ExternalAuthSnapshot) -> bool {
         if !auth.uses_codex_backend() {
             tracing::warn!("ignoring externally provided auth without Codex backend capability");
             return false;
@@ -2392,8 +2424,8 @@ impl AuthManager {
             config.auth_route_config(),
         )
         .await;
-        if let Some(auth) = config.external_provided_auth() {
-            auth_manager.set_external_provided_auth(auth);
+        if let Some(snapshot) = config.external_auth_snapshot() {
+            auth_manager.set_external_auth(Arc::new(snapshot));
         }
         auth_manager
     }

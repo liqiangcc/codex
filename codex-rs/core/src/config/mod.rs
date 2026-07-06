@@ -73,7 +73,7 @@ use codex_git_utils::resolve_root_git_project_for_trust;
 use codex_install_context::InstallContext;
 use codex_login::AuthManagerConfig;
 use codex_login::AuthRouteConfig;
-use codex_login::ExternalProvidedAuth;
+use codex_login::ExternalAuthSnapshot;
 use codex_mcp::McpConfig;
 use codex_mcp::McpPluginAttribution;
 use codex_mcp::McpServerRegistration;
@@ -821,7 +821,7 @@ pub struct Config {
     /// In-memory auth supplied by a trusted embedding runtime.
     ///
     /// This is never loaded from config files or user overrides.
-    pub external_provided_auth: Option<ExternalProvidedAuth>,
+    pub external_auth_snapshot: Option<ExternalAuthSnapshot>,
 
     /// Definition for MCP servers that Codex can reach out to for tool calls.
     pub mcp_servers: Constrained<HashMap<String, McpServerConfig>>,
@@ -1230,8 +1230,8 @@ impl AuthManagerConfig for Config {
         Config::auth_route_config(self)
     }
 
-    fn external_provided_auth(&self) -> Option<ExternalProvidedAuth> {
-        self.external_provided_auth.clone()
+    fn external_auth_snapshot(&self) -> Option<ExternalAuthSnapshot> {
+        self.external_auth_snapshot.clone()
     }
 }
 
@@ -3826,7 +3826,7 @@ impl Config {
                 cfg.cli_auth_credentials_store.unwrap_or_default(),
                 env!("CARGO_PKG_VERSION"),
             ),
-            external_provided_auth: None,
+            external_auth_snapshot: None,
             mcp_servers,
             // The config.toml omits "_mode" because it's a config file. However, "_mode"
             // is important in code to differentiate the mode from the store implementation.

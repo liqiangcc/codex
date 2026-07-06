@@ -340,8 +340,8 @@ impl ModelProvider for ConfiguredModelProvider {
 mod tests {
     use std::num::NonZeroU64;
 
-    use codex_login::ExternalProvidedAuth;
-    use codex_login::ExternalProvidedAuthCapabilities;
+    use codex_login::ExternalAuthSnapshot;
+    use codex_login::ExternalAuthSnapshotCapabilities;
     use codex_login::auth::AgentIdentityAuthPolicy;
     use codex_login::auth::BedrockApiKeyAuth;
     use codex_model_provider_info::ModelProviderAwsAuthInfo;
@@ -597,8 +597,8 @@ mod tests {
 
     #[test]
     fn openai_provider_does_not_report_backend_only_external_auth_as_chatgpt() {
-        let auth = ExternalProvidedAuth::new([], "user-123").with_capabilities(
-            ExternalProvidedAuthCapabilities {
+        let auth = ExternalAuthSnapshot::new([], "user-123").with_capabilities(
+            ExternalAuthSnapshotCapabilities {
                 uses_codex_backend: true,
                 ..Default::default()
             },

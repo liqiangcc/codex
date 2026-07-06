@@ -9,7 +9,7 @@ use codex_api::AuthProvider;
 use codex_api::SharedAuthProvider;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_login::ExternalProvidedAuth;
+use codex_login::ExternalAuthSnapshot;
 use codex_login::auth::AgentIdentityAuth;
 use codex_login::auth::AgentIdentityAuthError;
 use codex_login::auth::AgentIdentityAuthPolicy;
@@ -112,11 +112,11 @@ impl AuthProvider for AgentIdentityAuthProvider {
 }
 
 #[derive(Clone, Debug)]
-struct ExternalProvidedAuthProvider {
-    auth: ExternalProvidedAuth,
+struct ExternalAuthSnapshotProvider {
+    auth: ExternalAuthSnapshot,
 }
 
-impl AuthProvider for ExternalProvidedAuthProvider {
+impl AuthProvider for ExternalAuthSnapshotProvider {
     fn add_auth_headers(&self, headers: &mut HeaderMap) {
         for (name, value) in self.auth.headers() {
             let Ok(name) = HeaderName::from_bytes(name.as_bytes()) else {
@@ -270,7 +270,7 @@ fn bearer_auth_for_provider(
 pub fn auth_provider_from_auth(auth: &CodexAuth) -> SharedAuthProvider {
     match auth {
         CodexAuth::ExternalProvided(auth) => {
-            Arc::new(ExternalProvidedAuthProvider { auth: auth.clone() })
+            Arc::new(ExternalAuthSnapshotProvider { auth: auth.clone() })
         }
         CodexAuth::AgentIdentity(auth) => {
             Arc::new(AgentIdentityAuthProvider { auth: auth.clone() })
@@ -438,9 +438,9 @@ mod tests {
     }
 
     #[test]
-    fn external_provided_auth_provider_uses_caller_headers() {
+    fn external_auth_snapshot_provider_uses_caller_headers() {
         let auth = CodexAuth::ExternalProvided(
-            ExternalProvidedAuth::new(
+            ExternalAuthSnapshot::new(
                 [(
                     "x-openai-actor-authorization".to_string(),
                     "actor-token".to_string(),

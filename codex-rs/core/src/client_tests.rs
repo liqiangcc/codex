@@ -23,8 +23,8 @@ use codex_login::AuthCredentialsStoreMode;
 use codex_login::AuthKeyringBackendKind;
 use codex_login::AuthManager;
 use codex_login::CodexAuth;
-use codex_login::ExternalProvidedAuth;
-use codex_login::ExternalProvidedAuthCapabilities;
+use codex_login::ExternalAuthSnapshot;
+use codex_login::ExternalAuthSnapshotCapabilities;
 use codex_login::auth::AgentIdentityAuthPolicy;
 use codex_model_provider::BearerAuthProvider;
 use codex_model_provider::SharedModelProvider;
@@ -737,8 +737,8 @@ async fn dropped_backpressured_response_stream_traces_cancelled_partial_output()
 #[test]
 fn auth_request_telemetry_context_tracks_attached_auth_and_retry_phase() {
     let auth =
-        CodexAuth::ExternalProvided(ExternalProvidedAuth::new([], "user-123").with_capabilities(
-            ExternalProvidedAuthCapabilities {
+        CodexAuth::ExternalProvided(ExternalAuthSnapshot::new([], "user-123").with_capabilities(
+            ExternalAuthSnapshotCapabilities {
                 uses_codex_backend: true,
                 ..Default::default()
             },

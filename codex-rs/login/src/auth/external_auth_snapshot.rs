@@ -3,28 +3,28 @@ use std::fmt;
 
 use codex_protocol::account::PlanType as AccountPlanType;
 
-/// Backend authentication supplied programmatically by the caller.
+/// A concrete auth snapshot supplied by an external auth provider.
 ///
 /// The caller owns credential validation, rotation, and persistence.
 /// Codex keeps this snapshot in memory and uses its headers for backend requests.
 #[derive(Clone, PartialEq, Eq)]
-pub struct ExternalProvidedAuth {
+pub struct ExternalAuthSnapshot {
     headers: BTreeMap<String, String>,
     account_id: Option<String>,
     user_id: String,
     account_email: Option<String>,
     account_plan_type: Option<AccountPlanType>,
     is_fedramp_account: bool,
-    capabilities: ExternalProvidedAuthCapabilities,
+    capabilities: ExternalAuthSnapshotCapabilities,
 }
 
-/// Behavior explicitly enabled by the caller that supplies
-/// [ExternalProvidedAuth].
+/// Behavior explicitly enabled by the provider that supplies an
+/// external auth snapshot.
 ///
 /// All capabilities default to disabled. Callers should only enable behavior
 /// that is supported by the credentials they provide.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct ExternalProvidedAuthCapabilities {
+pub struct ExternalAuthSnapshotCapabilities {
     /// Whether these credentials can authenticate requests to Codex backend
     /// services.
     pub uses_codex_backend: bool,
@@ -33,9 +33,9 @@ pub struct ExternalProvidedAuthCapabilities {
     pub has_chatgpt_account: bool,
 }
 
-impl fmt::Debug for ExternalProvidedAuth {
+impl fmt::Debug for ExternalAuthSnapshot {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ExternalProvidedAuth")
+        f.debug_struct("ExternalAuthSnapshot")
             .field("headers", &"<redacted>")
             .field("account_id", &self.account_id)
             .field("user_id", &self.user_id)
@@ -50,7 +50,7 @@ impl fmt::Debug for ExternalProvidedAuth {
     }
 }
 
-impl ExternalProvidedAuth {
+impl ExternalAuthSnapshot {
     /// Creates externally provided auth with backend request headers and a stable user identity.
     pub fn new(
         headers: impl IntoIterator<Item = (String, String)>,
@@ -63,7 +63,7 @@ impl ExternalProvidedAuth {
             account_email: None,
             account_plan_type: Some(AccountPlanType::Unknown),
             is_fedramp_account: false,
-            capabilities: ExternalProvidedAuthCapabilities::default(),
+            capabilities: ExternalAuthSnapshotCapabilities::default(),
         }
     }
 
@@ -92,7 +92,7 @@ impl ExternalProvidedAuth {
     }
 
     /// Sets the behavior supported by these externally provided credentials.
-    pub fn with_capabilities(mut self, capabilities: ExternalProvidedAuthCapabilities) -> Self {
+    pub fn with_capabilities(mut self, capabilities: ExternalAuthSnapshotCapabilities) -> Self {
         self.capabilities = capabilities;
         self
     }
@@ -128,7 +128,7 @@ impl ExternalProvidedAuth {
     }
 
     /// Returns the behavior supported by these externally provided credentials.
-    pub fn capabilities(&self) -> ExternalProvidedAuthCapabilities {
+    pub fn capabilities(&self) -> ExternalAuthSnapshotCapabilities {
         self.capabilities
     }
 
@@ -161,13 +161,13 @@ mod tests {
 
     #[test]
     fn capabilities_are_disabled_until_the_caller_enables_them() {
-        let auth = ExternalProvidedAuth::new([], "user-123");
+        let auth = ExternalAuthSnapshot::new([], "user-123");
         assert_eq!(
             auth.capabilities(),
-            ExternalProvidedAuthCapabilities::default()
+            ExternalAuthSnapshotCapabilities::default()
         );
 
-        let auth = auth.with_capabilities(ExternalProvidedAuthCapabilities {
+        let auth = auth.with_capabilities(ExternalAuthSnapshotCapabilities {
             uses_codex_backend: true,
             has_chatgpt_account: true,
         });

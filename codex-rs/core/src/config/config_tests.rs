@@ -71,8 +71,8 @@ use codex_exec_server::LOCAL_FS;
 use codex_features::Feature;
 use codex_features::FeaturesToml;
 use codex_login::AuthManager;
-use codex_login::ExternalProvidedAuth;
-use codex_login::ExternalProvidedAuthCapabilities;
+use codex_login::ExternalAuthSnapshot;
+use codex_login::ExternalAuthSnapshotCapabilities;
 use codex_model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;
 use codex_model_provider_info::OLLAMA_OSS_PROVIDER_ID;
 use codex_model_provider_info::WireApi;
@@ -203,16 +203,16 @@ async fn derive_legacy_sandbox_policy_for_test(
 }
 
 #[tokio::test]
-async fn external_provided_auth_is_installed_from_runtime_config() -> std::io::Result<()> {
+async fn external_auth_snapshot_is_installed_from_runtime_config() -> std::io::Result<()> {
     let codex_home = tempdir()?;
     let mut config = ConfigBuilder::default()
         .codex_home(codex_home.path().to_path_buf())
         .fallback_cwd(Some(codex_home.path().to_path_buf()))
         .build()
         .await?;
-    config.external_provided_auth =
-        Some(ExternalProvidedAuth::new([], "user-123").with_capabilities(
-            ExternalProvidedAuthCapabilities {
+    config.external_auth_snapshot =
+        Some(ExternalAuthSnapshot::new([], "user-123").with_capabilities(
+            ExternalAuthSnapshotCapabilities {
                 uses_codex_backend: true,
                 ..Default::default()
             },

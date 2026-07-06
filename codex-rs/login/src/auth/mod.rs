@@ -7,8 +7,8 @@ mod personal_access_token;
 mod storage;
 mod util;
 
+mod external_auth_snapshot;
 mod external_bearer;
-mod external_provided;
 mod manager;
 mod revoke;
 
@@ -16,6 +16,6 @@ pub use bedrock_api_key::BedrockApiKeyAuth;
 pub use bedrock_api_key::login_with_bedrock_api_key;
 pub use error::RefreshTokenFailedError;
 pub use error::RefreshTokenFailedReason;
-pub use external_provided::ExternalProvidedAuth;
-pub use external_provided::ExternalProvidedAuthCapabilities;
+pub use external_auth_snapshot::ExternalAuthSnapshot;
+pub use external_auth_snapshot::ExternalAuthSnapshotCapabilities;
 pub use manager::*;

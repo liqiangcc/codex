@@ -1,5 +1,5 @@
 use super::*;
-use crate::auth::ExternalProvidedAuthCapabilities;
+use crate::auth::ExternalAuthSnapshotCapabilities;
 use crate::auth::storage::FileAuthStorage;
 use crate::auth::storage::get_auth_file;
 use crate::token_data::IdTokenInfo;
@@ -35,7 +35,7 @@ const WORKSPACE_ID_DISALLOWED: &str = "123e4567-e89b-42d3-a456-426614174002";
 #[test]
 fn externally_provided_auth_delegates_account_metadata() {
     let auth = CodexAuth::ExternalProvided(
-        ExternalProvidedAuth::new([], "user-123")
+        ExternalAuthSnapshot::new([], "user-123")
             .with_account_email("user@example.com")
             .with_account_plan_type(AccountPlanType::Pro)
             .with_fedramp_account(/*is_fedramp_account*/ true),
@@ -57,18 +57,18 @@ fn externally_provided_auth_respects_forced_workspace() {
     manager.set_forced_chatgpt_workspace_id(Some(vec![WORKSPACE_ID_ALLOWED.to_string()]));
 
     let backend_auth = |account_id| {
-        ExternalProvidedAuth::new([], "user-123")
+        ExternalAuthSnapshot::new([], "user-123")
             .with_account_id(account_id)
-            .with_capabilities(ExternalProvidedAuthCapabilities {
+            .with_capabilities(ExternalAuthSnapshotCapabilities {
                 uses_codex_backend: true,
                 ..Default::default()
             })
     };
 
-    assert!(!manager.set_external_provided_auth(backend_auth(WORKSPACE_ID_DISALLOWED)));
+    assert!(!manager.set_external_auth(Arc::new(backend_auth(WORKSPACE_ID_DISALLOWED))));
     assert!(matches!(manager.auth_cached(), Some(CodexAuth::ApiKey(_))));
 
-    assert!(manager.set_external_provided_auth(backend_auth(WORKSPACE_ID_ALLOWED)));
+    assert!(manager.set_external_auth(Arc::new(backend_auth(WORKSPACE_ID_ALLOWED))));
     assert!(matches!(
         manager.auth_cached(),
         Some(CodexAuth::ExternalProvided(_))
@@ -79,7 +79,7 @@ fn externally_provided_auth_respects_forced_workspace() {
 fn externally_provided_auth_requires_codex_backend_capability() {
     let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("sk-test"));
 
-    assert!(!manager.set_external_provided_auth(ExternalProvidedAuth::new([], "user-123")));
+    assert!(!manager.set_external_auth(Arc::new(ExternalAuthSnapshot::new([], "user-123"))));
     assert!(matches!(manager.auth_cached(), Some(CodexAuth::ApiKey(_))));
 }
 
