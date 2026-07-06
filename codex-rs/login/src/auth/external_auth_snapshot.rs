@@ -127,11 +127,6 @@ impl ExternalAuthSnapshot {
         &self.user_id
     }
 
-    /// Returns the behavior supported by these externally provided credentials.
-    pub fn capabilities(&self) -> ExternalAuthSnapshotCapabilities {
-        self.capabilities
-    }
-
     /// Returns whether these credentials represent an authenticated human ChatGPT account.
     pub fn has_chatgpt_account(&self) -> bool {
         self.capabilities.has_chatgpt_account
@@ -140,38 +135,5 @@ impl ExternalAuthSnapshot {
     /// Returns whether these credentials can authenticate requests to Codex backend services.
     pub fn uses_codex_backend(&self) -> bool {
         self.capabilities.uses_codex_backend
-    }
-
-    /// Externally provided header auth does not expose an API key.
-    pub fn api_key(&self) -> Option<&str> {
-        None
-    }
-
-    /// Externally provided header auth does not expose a bearer token.
-    pub fn bearer_token(&self) -> Result<String, std::io::Error> {
-        Err(std::io::Error::other(
-            "externally provided auth does not expose a bearer token",
-        ))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn capabilities_are_disabled_until_the_caller_enables_them() {
-        let auth = ExternalAuthSnapshot::new([], "user-123");
-        assert_eq!(
-            auth.capabilities(),
-            ExternalAuthSnapshotCapabilities::default()
-        );
-
-        let auth = auth.with_capabilities(ExternalAuthSnapshotCapabilities {
-            uses_codex_backend: true,
-            has_chatgpt_account: true,
-        });
-        assert!(auth.capabilities().uses_codex_backend);
-        assert!(auth.capabilities().has_chatgpt_account);
     }
 }

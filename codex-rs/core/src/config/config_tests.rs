@@ -72,7 +72,6 @@ use codex_features::Feature;
 use codex_features::FeaturesToml;
 use codex_login::AuthManager;
 use codex_login::ExternalAuthSnapshot;
-use codex_login::ExternalAuthSnapshotCapabilities;
 use codex_model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;
 use codex_model_provider_info::OLLAMA_OSS_PROVIDER_ID;
 use codex_model_provider_info::WireApi;
@@ -210,19 +209,13 @@ async fn external_auth_snapshot_is_installed_from_runtime_config() -> std::io::R
         .fallback_cwd(Some(codex_home.path().to_path_buf()))
         .build()
         .await?;
-    config.external_auth_snapshot =
-        Some(ExternalAuthSnapshot::new([], "user-123").with_capabilities(
-            ExternalAuthSnapshotCapabilities {
-                uses_codex_backend: true,
-                ..Default::default()
-            },
-        ));
+    config.external_auth_snapshot = Some(ExternalAuthSnapshot::new([], "user-123"));
 
     let auth_manager =
         AuthManager::shared_from_config(&config, /*enable_codex_api_key_env*/ false).await;
     let auth = auth_manager.auth().await.expect("external auth");
 
-    assert!(auth.uses_codex_backend());
+    assert!(!auth.uses_codex_backend());
     assert!(!auth.is_chatgpt_auth());
     assert_eq!(auth.get_chatgpt_user_id().as_deref(), Some("user-123"));
     Ok(())

@@ -545,7 +545,7 @@ impl CodexAuth {
     pub fn api_key(&self) -> Option<&str> {
         match self {
             Self::ApiKey(auth) => Some(auth.api_key.as_str()),
-            Self::ExternalProvided(auth) => auth.api_key(),
+            Self::ExternalProvided(_) => None,
             Self::Chatgpt(_)
             | Self::ChatgptAuthTokens(_)
             | Self::AgentIdentity(_)
@@ -578,7 +578,9 @@ impl CodexAuth {
             Self::AgentIdentity(_) => Err(std::io::Error::other(
                 "agent identity auth does not expose a bearer token",
             )),
-            Self::ExternalProvided(auth) => auth.bearer_token(),
+            Self::ExternalProvided(_) => Err(std::io::Error::other(
+                "externally provided auth does not expose a bearer token",
+            )),
             Self::PersonalAccessToken(auth) => Ok(auth.access_token().to_string()),
             Self::BedrockApiKey(_) => Err(std::io::Error::other(
                 "Bedrock API key auth does not expose a Codex bearer token",
@@ -2312,29 +2314,25 @@ impl AuthManager {
         }
     }
 
-    pub fn set_external_auth(&self, external_auth: Arc<dyn ExternalAuth>) -> bool {
+    pub fn set_external_auth(&self, external_auth: Arc<dyn ExternalAuth>) {
         if let Some(snapshot) = external_auth.snapshot() {
             if external_auth.auth_mode() != AuthMode::ExternalProvided {
                 tracing::warn!("ignoring external auth snapshot from incompatible provider mode");
-                return false;
+                return;
             }
             if !self.install_external_auth_snapshot(snapshot) {
-                return false;
+                return;
             }
         }
         if let Ok(mut guard) = self.external_auth.write() {
             *guard = Some(external_auth);
         }
-        true
     }
 
     /// Replaces the current auth snapshot with a snapshot from an external provider.
     fn install_external_auth_snapshot(&self, auth: ExternalAuthSnapshot) -> bool {
-        if !auth.uses_codex_backend() {
-            tracing::warn!("ignoring externally provided auth without Codex backend capability");
-            return false;
-        }
-        if let Some(expected_workspace_ids) = self.forced_chatgpt_workspace_id()
+        if auth.uses_codex_backend()
+            && let Some(expected_workspace_ids) = self.forced_chatgpt_workspace_id()
             && !auth
                 .account_id()
                 .is_some_and(|actual| expected_workspace_ids.iter().any(|id| id == actual))
