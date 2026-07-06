@@ -1,4 +1,6 @@
-load("//:defs.bzl", "codex_rust_crate")
+load("@crates//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("//:defs.bzl", "codex_rust_crate", "workspace_root_test")
 
 codex_rust_crate(
     name = "app-server",
@@ -23,4 +25,37 @@ codex_rust_crate(
         "app-server-unit-tests": 8,
     },
     test_tags = ["no-sandbox"],
+)
+
+rust_binary(
+    name = "cold-thread-start-bench-bin",
+    testonly = True,
+    srcs = ["benches/cold_thread_start.rs"],
+    crate_name = "cold_thread_start_bench",
+    crate_root = "benches/cold_thread_start.rs",
+    data = [
+        ":codex-app-server",
+        "//codex-rs/exec-server/testing:exec-server",
+    ],
+    deps = all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ) + [
+        ":app-server",
+        "@crates//:divan",
+    ],
+)
+
+workspace_root_test(
+    name = "cold-thread-start-bench",
+    data = [
+        ":codex-app-server",
+        "//codex-rs/exec-server/testing:exec-server",
+    ],
+    runfile_env = {
+        ":codex-app-server": "CARGO_BIN_EXE_codex-app-server",
+        "//codex-rs/exec-server/testing:exec-server": "CARGO_BIN_EXE_exec-server",
+    },
+    test_bin = ":cold-thread-start-bench-bin",
+    workspace_root_marker = "//codex-rs/utils/cargo-bin:repo_root.marker",
 )

@@ -34,10 +34,7 @@ pub(crate) struct DelayedExecServer {
 
 impl DelayedExecServer {
     pub(crate) async fn start(codex_home: &Path, added_delay: Duration) -> Result<Self> {
-        let codex = codex_utils_cargo_bin::cargo_bin("codex")
-            .context("should find binary for local exec-server fixture")?;
-        let mut child = Command::new(codex);
-        child.args(["exec-server", "--listen", "ws://127.0.0.1:0"]);
+        let mut child = local_exec_server_command()?;
         child.stdin(Stdio::null());
         child.stdout(Stdio::piped());
         child.stderr(Stdio::inherit());
@@ -56,6 +53,21 @@ impl DelayedExecServer {
     pub(crate) fn websocket_url(&self) -> &str {
         self.interposer.websocket_url()
     }
+}
+
+fn local_exec_server_command() -> Result<Command> {
+    if let Ok(exec_server) = codex_utils_cargo_bin::cargo_bin("exec-server") {
+        return Ok(Command::new(exec_server));
+    }
+
+    // Cargo-backed functional tests do not build the Bazel-only fixture
+    // binary. Keep their existing CLI fallback while Bazel benchmarks inject
+    // CARGO_BIN_EXE_exec-server explicitly.
+    let codex = codex_utils_cargo_bin::cargo_bin("codex")
+        .context("should find binary for local exec-server fixture")?;
+    let mut command = Command::new(codex);
+    command.args(["exec-server", "--listen", "ws://127.0.0.1:0"]);
+    Ok(command)
 }
 
 struct TcpDelayInterposer {
