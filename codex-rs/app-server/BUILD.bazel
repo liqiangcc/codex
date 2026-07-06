@@ -48,6 +48,7 @@ rust_binary(
 
 workspace_root_test(
     name = "cold-thread-start-bench",
+    args = ["cold_thread_start"],
     data = [
         ":codex-app-server",
         "//codex-rs/exec-server/testing:exec-server",
