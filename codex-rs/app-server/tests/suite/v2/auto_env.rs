@@ -22,7 +22,9 @@ const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn builder_interposes_fixed_delay_for_local_auto_env() -> Result<()> {
-    if is_remote_test_environment() {
+    // The Bazel Windows-cross suite does not carry the local-only exec-server
+    // fixture that backs this assertion.
+    if cfg!(windows) || is_remote_test_environment() {
         return Ok(());
     }
 
