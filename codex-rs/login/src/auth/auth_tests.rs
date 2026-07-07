@@ -1015,20 +1015,106 @@ async fn refresh_failure_is_scoped_to_the_matching_auth_snapshot() {
     assert_eq!(manager.refresh_failure_for_auth(&updated_auth), None);
 }
 
-#[test]
-fn external_auth_tokens_without_chatgpt_metadata_cannot_seed_chatgpt_auth() {
-    let err = AuthDotJson::from_external_tokens(&ExternalAuthTokens::access_token_only(
-        "test-access-token",
-    ))
-    .expect_err("bearer-only external auth should not seed ChatGPT auth");
+#[derive(Clone)]
+struct ResolvableExternalAuth {
+    auth: CodexAuth,
+    mode: AuthMode,
+}
 
+impl ExternalAuth for ResolvableExternalAuth {
+    fn auth_mode(&self) -> AuthMode {
+        self.mode
+    }
+
+    fn resolve(&self) -> ExternalAuthFuture<'_, Option<CodexAuth>> {
+        Box::pin(async { Ok(Some(self.auth.clone())) })
+    }
+
+    fn refresh(&self, _context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, CodexAuth> {
+        Box::pin(async { Ok(self.auth.clone()) })
+    }
+}
+
+#[tokio::test]
+async fn external_auth_manager_resolves_non_api_key_codex_auth() {
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("stored-key"));
+    manager.set_external_auth(Arc::new(ResolvableExternalAuth {
+        mode: AuthMode::Chatgpt,
+        auth: CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+    }));
+
+    assert!(matches!(manager.auth().await, Some(CodexAuth::Chatgpt(_))));
+    assert!(matches!(manager.auth_cached(), Some(CodexAuth::Chatgpt(_))));
+    assert_eq!(manager.get_api_auth_mode(), Some(AuthMode::Chatgpt));
+    assert!(manager.current_auth_uses_codex_backend());
+    let recovery = manager.unauthorized_recovery();
+    assert_eq!(recovery.mode_name(), "external");
+    assert_eq!(recovery.step_name(), "external_refresh");
+
+    manager.clear_external_auth();
     assert_eq!(
-        err.to_string(),
-        "external auth tokens are missing ChatGPT metadata"
+        manager
+            .auth_cached()
+            .and_then(|auth| auth.api_key().map(str::to_string)),
+        Some("stored-key".to_string())
     );
 }
 
 #[tokio::test]
+async fn external_auth_manager_reload_clears_resolved_auth() {
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("stored-key"));
+    manager.set_external_auth(Arc::new(ResolvableExternalAuth {
+        mode: AuthMode::Chatgpt,
+        auth: CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+    }));
+
+    assert!(matches!(manager.auth().await, Some(CodexAuth::Chatgpt(_))));
+    let auth_change_rx = manager.auth_change_receiver();
+    let revision_before_reload = *auth_change_rx.borrow();
+
+    assert!(manager.reload().await);
+
+    assert_eq!(manager.auth_cached(), None);
+    assert_eq!(*auth_change_rx.borrow(), revision_before_reload + 1);
+}
+
+#[tokio::test]
+async fn external_auth_manager_rejects_resolved_auth_outside_forced_workspace() {
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("stored-key"));
+    manager.set_forced_chatgpt_workspace_id(Some(vec![WORKSPACE_ID_ALLOWED.to_string()]));
+    manager.set_external_auth(Arc::new(ResolvableExternalAuth {
+        mode: AuthMode::Chatgpt,
+        auth: CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+    }));
+
+    assert_eq!(
+        manager
+            .auth()
+            .await
+            .and_then(|auth| auth.api_key().map(str::to_string)),
+        Some("stored-key".to_string())
+    );
+    assert_eq!(manager.get_api_auth_mode(), Some(AuthMode::ApiKey));
+}
+
+#[tokio::test]
+async fn external_auth_manager_rejects_mismatched_resolved_auth_mode() {
+    let manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("stored-key"));
+    manager.set_external_auth(Arc::new(ResolvableExternalAuth {
+        auth: CodexAuth::create_dummy_chatgpt_auth_for_testing(),
+        mode: AuthMode::ApiKey,
+    }));
+
+    assert_eq!(
+        manager
+            .auth()
+            .await
+            .and_then(|auth| auth.api_key().map(str::to_string)),
+        Some("stored-key".to_string())
+    );
+}
+#[tokio::test]
+
 async fn external_bearer_only_auth_manager_uses_cached_provider_token() {
     let script = ProviderAuthScript::new(&["provider-token", "next-token"]).unwrap();
     let manager = AuthManager::external_bearer_only(script.auth_config());
