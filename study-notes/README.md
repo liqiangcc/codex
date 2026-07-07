@@ -5,6 +5,7 @@
 ## 学习约定
 
 - [学习目标和原则](goal-and-principles.md)
+- [学习方法探索](learning-method.md)
 - [Codex 架构阅读路线](codex-architecture.md)
 - [Agent 机制笔记](agent-notes.md)
 
