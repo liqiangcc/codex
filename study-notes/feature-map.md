@@ -32,6 +32,59 @@
 | 调试和诊断 | Todo | [#9](https://github.com/liqiangcc/codex/issues/9) |
 | Git 和协作 | Todo | [#10](https://github.com/liqiangcc/codex/issues/10) |
 
+## 阶段 1 功能覆盖清单
+
+阶段 1 不为每个细功能单独开一级卡片，而是把它们映射到上面的 10 张功能卡片。这样学习路线保持稳定，同时能确认 Codex CLI 的主要使用面没有漏掉。
+
+| Codex 细功能 | 所属功能卡片 | 阶段 1 深度 | 备注 |
+| --- | --- | --- | --- |
+| 安装 CLI、版本确认、启动 TUI | 安装、登录、启动 | 深入 | 建立所有学习任务的运行基线。 |
+| `codex login`、`logout`、认证方式 | 安装、登录、启动 | 深入 | 重点理解登录状态、凭据和故障排查。 |
+| `codex doctor`、环境诊断 | 安装、登录、启动；调试和诊断 | 深入 | 既是启动检查，也是异常排查入口。 |
+| 交互式 TUI、composer、初始 prompt | 交互式 coding agent | 深入 | 第一阶段核心能力。 |
+| 让 Codex 读代码、改代码、跑命令、跑测试 | 交互式 coding agent | 深入 | 每次学习都要落到可验证任务。 |
+| `/plan`、先计划再执行 | 交互式 coding agent | 深入 | 用于控制复杂任务风险。 |
+| `/diff`、查看本地变更 | Git 和协作 | 深入 | 每次写文件后都要检查。 |
+| `/review`、本地代码 review | Git 和协作 | 基础 | 先掌握使用场景，后续再读实现。 |
+| `codex exec`、一次性 prompt | 非交互执行 | 深入 | 学会和交互式模式做取舍。 |
+| `codex exec --json`、JSONL 输出 | 非交互执行 | 基础 | 先理解自动化价值，不急着做复杂脚本。 |
+| `codex exec resume` | 非交互执行；任务上下文 | 基础 | 关注历史上下文如何延续。 |
+| `resume`、`/resume`、继续会话 | 任务上下文 | 基础 | 学会恢复上下文，避免重复说明。 |
+| `/new`、`/clear`、`/compact` | 任务上下文 | 基础 | 重点理解什么时候重置或压缩上下文。 |
+| `/fork`、`/side`、分支对话 | 任务上下文 | 浅用 | 作为探索替代方案的工具，暂不深入实现。 |
+| Prompt 写法、验收标准、范围控制 | 任务上下文 | 深入 | 直接决定 Codex 输出质量。 |
+| 文件路径、错误日志、图片输入 | 任务上下文 | 基础 | 图片输入先作为可选上下文能力。 |
+| Web search、`--search`、`web_search` 配置 | 任务上下文；权限和安全 | 基础 | 重点理解新鲜度、注入风险和网络边界。 |
+| sandbox、approval、`/permissions` | 权限和安全 | 深入 | 第一阶段必须掌握。 |
+| `--yolo`、Full Access | 权限和安全 | 基础 | 只理解风险，不作为默认使用方式。 |
+| `execpolicy` | 权限和安全 | 基础 | 先知道它解决命令策略问题，后续再源码深入。 |
+| network 权限和外部访问 | 权限和安全 | 基础 | 和 web search、MCP、命令执行一起理解。 |
+| `AGENTS.md`、`/init` | 项目约定 | 深入 | 适合沉淀仓库长期规则。 |
+| custom prompts、rules | 项目约定 | 基础 | 先区分一次性 prompt 和长期规则。 |
+| `config.toml`、profiles、`-c key=value` | 配置系统 | 深入 | 重点理解配置优先级和适用范围。 |
+| model、reasoning、`/model`、`review_model` | 配置系统 | 基础 | 学会选择和检查，不做模型评测。 |
+| feature flags、`codex features`、`/experimental` | 配置系统 | 基础 | 只启用确实需要验证的功能。 |
+| TUI 主题、keymap、vim、statusline、title | 交互式 coding agent | 浅用 | 效率功能，阶段 1 不深入。 |
+| shell completions | 安装、登录、启动 | 浅用 | 提升日常使用效率即可。 |
+| MCP、`codex mcp`、`/mcp` | 工具和扩展 | 基础 | 重点理解外部工具接入边界。 |
+| skills、`/skills` | 工具和扩展 | 基础 | 用于复用任务工作流。 |
+| hooks、`/hooks` | 工具和扩展；权限和安全 | 基础 | 重点关注信任和生命周期。 |
+| plugins、`codex plugin`、`/plugins` | 工具和扩展 | 基础 | 先理解分发和安装，不做插件开发。 |
+| apps/connectors、`/apps` | 工具和扩展 | 浅用 | 当前阶段只了解概念和授权边界。 |
+| subagents、`/agent` | 工具和扩展；任务上下文 | 可选 | 阶段 1 不作为必学项，后续作为高级 agent 主题。 |
+| `/status`、`/usage`、`/debug-config` | 调试和诊断 | 深入 | 用于确认模型、权限、上下文和配置。 |
+| `codex debug models` | 调试和诊断；配置系统 | 基础 | 用于理解模型目录和排查模型问题。 |
+| `/ps`、`/stop`、后台命令状态 | 调试和诊断 | 基础 | 用于处理长时间运行或卡住的命令。 |
+| `/feedback` | 调试和诊断 | 浅用 | 只在需要反馈问题时使用。 |
+| Git dirty state、diff、commit、push | Git 和协作 | 深入 | 学习分支的日常闭环。 |
+| GitHub Issues 学习看板 | Git 和协作 | 深入 | 手机端过程记录和状态跟踪。 |
+| PR、review comments、上游贡献 | Git 和协作 | 基础 | 阶段 1 只掌握概念，不向上游发 PR。 |
+| Codex IDE extension | 暂不纳入阶段 1 | 暂不深入 | 后续可作为单独阶段。 |
+| Codex app、Codex cloud | 暂不纳入阶段 1 | 暂不深入 | 先把 CLI 学扎实。 |
+| app-server、SDK、GitHub Action、remote-control | 暂不纳入阶段 1 | 暂不深入 | 属于程序化接口或开发者扩展阶段。 |
+
+如果某个细功能无法自然归入这张表中的任何卡片，再考虑新增一级功能卡片。
+
 ## 卡片模板
 
 ```markdown
