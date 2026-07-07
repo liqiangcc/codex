@@ -102,6 +102,39 @@ async fn managed_bedrock_persistence_preserves_cached_openai_auth() -> anyhow::R
     Ok(())
 }
 
+#[tokio::test]
+#[serial(codex_auth_env)]
+async fn managed_bedrock_removal_preserves_cached_openai_auth() -> anyhow::Result<()> {
+    let codex_home = tempdir()?;
+    let storage = FileAuthStorage::new(codex_home.path().to_path_buf());
+    storage.save(&api_key_auth())?;
+    let auth_manager = AuthManager::new(
+        codex_home.path().to_path_buf(),
+        /*enable_codex_api_key_env*/ false,
+        AuthCredentialsStoreMode::File,
+        /*forced_chatgpt_workspace_id*/ None,
+        /*chatgpt_base_url*/ None,
+        AuthKeyringBackendKind::default(),
+        /*auth_route_config*/ None,
+    )
+    .await;
+    auth_manager.persist_bedrock_api_key_auth("bedrock-api-key-test", "us-east-1")?;
+    assert!(auth_manager.reload_bedrock_api_key_auth()?);
+
+    assert!(auth_manager.remove_stored_bedrock_api_key_auth()?);
+    assert!(auth_manager.reload_bedrock_api_key_auth()?);
+
+    assert_eq!(storage.load()?, None);
+    assert_eq!(
+        auth_manager
+            .auth_cached()
+            .and_then(|auth| auth.api_key().map(str::to_string)),
+        Some("sk-test-key".to_string())
+    );
+    assert_eq!(auth_manager.bedrock_api_key_auth_cached(), None);
+    Ok(())
+}
+
 #[test]
 fn bedrock_auth_debug_redacts_api_key() {
     assert_eq!(

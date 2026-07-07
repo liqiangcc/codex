@@ -7,6 +7,7 @@ use serde::Serialize;
 
 use super::manager::AuthManager;
 use super::manager::load_auth_dot_json;
+use super::manager::logout;
 use super::manager::save_auth;
 use super::storage::AuthDotJson;
 use super::storage::AuthKeyringBackendKind;
@@ -114,6 +115,18 @@ impl AuthManager {
             self.keyring_backend_kind,
         )?;
         Ok(self.set_cached_bedrock_api_key_auth(bedrock_api_key))
+    }
+
+    /// Removes stored managed Bedrock auth without changing cached general Codex auth.
+    pub fn remove_stored_bedrock_api_key_auth(&self) -> std::io::Result<bool> {
+        if !self.has_stored_bedrock_api_key_auth()? {
+            return Ok(false);
+        }
+        logout(
+            &self.codex_home,
+            self.auth_credentials_store_mode,
+            self.keyring_backend_kind,
+        )
     }
 }
 
