@@ -73,6 +73,7 @@
 - 实验 issue 使用 `[Experiment] ...`，仅当实验较大或跨多个功能时创建。
 - issue 顶部摘要必须保持最新，方便手机查看。
 - 完成后关闭 issue，并在 `feature-map.md` 标记 `Done`。
+- 新建功能学习 issue 时优先使用 [Feature Study issue 模板](issue-templates/feature-study.md)，不要修改上游 `.github/ISSUE_TEMPLATE/`。
 
 ## 文档维护规则
 
@@ -93,6 +94,21 @@
 - `Done`：已经完成阶段 1 成功标准。
 
 如果 issue 和 `feature-map.md` 状态不一致，以 issue 当前状态为过程事实，以 `feature-map.md` 为整理结果，复盘时同步两边。
+
+### 状态一致性检查
+
+每周复盘时检查三件事：
+
+1. `feature-map.md` 功能索引中的状态。
+2. 对应 GitHub issue 顶部摘要中的状态。
+3. issue 标签和 open/closed 状态。
+
+处理规则：
+
+- issue 仍在推进时，issue 保持 open，功能卡片状态不能是 `Done`。
+- 功能卡片标记 `Done` 时，对应 issue 必须关闭或加 `done` 标签。
+- issue 带 `need-experiment` 或 `need-source-reading` 标签时，功能卡片状态也应同步为对应状态。
+- 如果状态冲突，先更新 issue 摘要，再更新 `feature-map.md`。
 
 ## 过期处理
 
@@ -121,3 +137,4 @@ gh issue list --repo liqiangcc/codex --label feature-map --limit 20
 
 `TBD` 和 `待补充` 可以存在，但每次复盘时应该确认它们是否仍然合理。
 
+更完整的检查项见 [学习检查清单](checks.md)。
