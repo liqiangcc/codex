@@ -161,6 +161,7 @@ impl TestAppServer {
         TestAppServerBuilder {
             codex_home: None,
             exec_server_delay: None,
+            exec_server_program: None,
             app_server_args: DEFAULT_APP_SERVER_ARGS,
         }
     }
@@ -212,6 +213,7 @@ impl TestAppServer {
         Self::new_with_auto_env_options(
             codex_home,
             /*exec_server_delay*/ None,
+            /*exec_server_program*/ None,
             DEFAULT_APP_SERVER_ARGS,
             extra_env_overrides,
         )
@@ -221,6 +223,7 @@ impl TestAppServer {
     async fn new_with_auto_env_options(
         codex_home: &Path,
         exec_server_delay: Option<Duration>,
+        exec_server_program: Option<&Path>,
         app_server_args: &[&str],
         extra_env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
@@ -239,10 +242,13 @@ impl TestAppServer {
                     !is_remote_test_environment(),
                     "TestAppServer exec-server delay only supports the local test environment"
                 );
+                let exec_server_program = exec_server_program
+                    .context("TestAppServer exec-server delay requires an exec-server program")?;
                 // Local auto environments normally use stdio. Start a
                 // host-local WebSocket fixture so the delay interposer has a
                 // socket stream to wrap.
-                let local_exec_server = LocalWebsocketExecServer::start(codex_home).await?;
+                let local_exec_server =
+                    LocalWebsocketExecServer::start(codex_home, exec_server_program).await?;
                 let interposer =
                     WebsocketDelayInterposer::start(local_exec_server.websocket_url(), added_delay)
                         .await?;
@@ -1857,6 +1863,7 @@ impl TestAppServer {
 pub struct TestAppServerBuilder {
     codex_home: Option<PathBuf>,
     exec_server_delay: Option<Duration>,
+    exec_server_program: Option<PathBuf>,
     app_server_args: &'static [&'static str],
 }
 
@@ -1871,6 +1878,13 @@ impl TestAppServerBuilder {
     /// A 15ms delay contributes roughly 30ms to a round trip.
     pub fn with_exec_server_delay(mut self, exec_server_delay: Duration) -> Self {
         self.exec_server_delay = Some(exec_server_delay);
+        self
+    }
+
+    /// Uses this exec-server binary when fixed RPC delay needs a WebSocket
+    /// transport.
+    pub fn with_exec_server_program(mut self, exec_server_program: &Path) -> Self {
+        self.exec_server_program = Some(exec_server_program.to_path_buf());
         self
     }
 
@@ -1889,6 +1903,7 @@ impl TestAppServerBuilder {
         let Self {
             codex_home,
             exec_server_delay,
+            exec_server_program,
             app_server_args,
         } = self;
         let (codex_home, owned_codex_home) = match codex_home {
@@ -1904,6 +1919,7 @@ impl TestAppServerBuilder {
         let mut app_server = TestAppServer::new_with_auto_env_options(
             &codex_home,
             exec_server_delay,
+            exec_server_program.as_deref(),
             app_server_args,
             &[],
         )

@@ -42,9 +42,12 @@ struct ColdThreadStartCase {
 
 impl ColdThreadStartCase {
     async fn new(skill_count: usize) -> Self {
+        let exec_server = codex_utils_cargo_bin::cargo_bin("exec-server")
+            .expect("benchmark exec-server fixture should be available");
         let mut app_server = TestAppServer::builder()
             .without_debug_only_test_args()
             .with_exec_server_delay(EXEC_SERVER_DELAY)
+            .with_exec_server_program(&exec_server)
             .build()
             .await
             .expect("benchmark app-server fixture should start");

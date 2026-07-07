@@ -22,19 +22,8 @@ pub(crate) struct LocalWebsocketExecServer {
 }
 
 impl LocalWebsocketExecServer {
-    pub(crate) async fn start(codex_home: &Path) -> Result<Self> {
-        let mut command = if let Ok(exec_server) = codex_utils_cargo_bin::cargo_bin("exec-server") {
-            Command::new(exec_server)
-        } else {
-            // Cargo-backed functional tests do not build the Bazel-only
-            // fixture binary. Keep their existing CLI fallback while Bazel
-            // tests and macrobenchmarks inject CARGO_BIN_EXE_exec-server.
-            let codex = codex_utils_cargo_bin::cargo_bin("codex")
-                .context("should find binary for local exec-server fixture")?;
-            let mut command = Command::new(codex);
-            command.args(["exec-server", "--listen", "ws://127.0.0.1:0"]);
-            command
-        };
+    pub(crate) async fn start(codex_home: &Path, exec_server_program: &Path) -> Result<Self> {
+        let mut command = Command::new(exec_server_program);
         command.stdin(Stdio::null());
         command.stdout(Stdio::piped());
         command.stderr(Stdio::inherit());
