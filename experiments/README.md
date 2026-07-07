@@ -8,5 +8,4 @@
 - 最小代码或脚本：只验证一个机制。
 - 结论：对应到源码中的哪个模块或函数。
 
-实验代码只放在 `study/codex-agent-learning` 分支，不合入 `main`。
-
+实验代码只放在 `00-study/codex-agent-learning` 分支，不合入 `main`。

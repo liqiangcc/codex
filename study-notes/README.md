@@ -1,6 +1,6 @@
 # Codex 学习笔记
 
-这个分支用于学习 `openai/codex` 的源码和 agent 运行机制。`main` 分支保持紧跟上游，本分支保存笔记、实验和阅读路线。
+`00-study/codex-agent-learning` 分支用于学习 `openai/codex` 的源码和 agent 运行机制。`main` 分支保持紧跟上游，本分支保存笔记、实验和阅读路线，并用 `00-` 前缀让它在分支列表中更靠前。
 
 ## 仓库入口
 
@@ -30,8 +30,7 @@ git fetch upstream
 git merge --ff-only upstream/main
 git push origin main
 
-git checkout study/codex-agent-learning
+git checkout 00-study/codex-agent-learning
 git rebase main
 git push --force-with-lease
 ```
-
