@@ -7,6 +7,7 @@
 - [学习目标和原则](goal-and-principles.md)
 - [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)
 - [Codex CLI 功能地图](feature-map.md)
+- [Codex CLI 详细功能文档](features/)
 - [学习体系维护手册](maintenance.md)
 - [学习检查清单](checks.md)
 - [Feature Study issue 模板](issue-templates/feature-study.md)
@@ -20,10 +21,11 @@
 
 1. 读 [学习目标和原则](goal-and-principles.md)，确认学习边界。
 2. 读 [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)，按闭环推进。
-3. 从 [Codex CLI 功能地图](feature-map.md) 选择一个功能卡片。
-4. 打开对应 GitHub issue，用手机记录问题、观察和下一步。
-5. 做最小实验或真实任务，把稳定结论整理回功能地图。
-6. 每次学习后按 [学习检查清单](checks.md) 做收尾检查。
+3. 从 [Codex CLI 功能地图](feature-map.md) 选择一个功能。
+4. 阅读对应 [详细功能文档](features/)，先理解背景、边界、入口、练习和实验设计。
+5. 打开对应 GitHub issue，用手机记录问题、观察和下一步。
+6. 做最小实验或真实任务，把稳定结论整理回详细功能文档。
+7. 每次学习后按 [学习检查清单](checks.md) 做收尾检查。
 
 ### 阶段 2：读源码实现
 
