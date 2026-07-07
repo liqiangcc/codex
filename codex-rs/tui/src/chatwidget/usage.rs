@@ -235,6 +235,7 @@ impl ChatWidget {
                 .selected_index_for_active_view(RATE_LIMIT_RESET_VIEW_ID)
                 .is_none()
         {
+            confirmation_gate.store(true, Ordering::Release);
             return false;
         }
         let idempotency_key = Uuid::new_v4().to_string();

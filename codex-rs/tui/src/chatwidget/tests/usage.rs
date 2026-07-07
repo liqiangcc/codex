@@ -517,6 +517,57 @@ async fn rate_limit_reset_confirmation_no_and_escape_return_to_picker() {
 }
 
 #[tokio::test]
+async fn rejected_reset_confirmation_rearms_its_picker_row() {
+    let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
+    let request_id = chat.show_rate_limit_reset_loading_popup();
+    let first_expiry = expiry_timestamp(/*day*/ 18, /*hour*/ 9, /*minute*/ 39);
+    assert!(chat.finish_rate_limit_reset_credits_refresh(
+        request_id,
+        Vec::new(),
+        Ok(detailed_reset_credits(
+            /*available_count*/ 2,
+            vec![
+                reset_credit_with_title("credit-1", Some(first_expiry), "First reset"),
+                reset_credit_with_title("credit-2", /*expires_at*/ None, "Second reset"),
+            ],
+        )),
+    ));
+
+    chat.handle_key_event(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
+    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+    chat.handle_key_event(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
+    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+
+    show_rate_limit_reset_confirmation_from_event(&mut chat, &mut rx);
+    let Ok(AppEvent::OpenRateLimitResetConfirmation {
+        picker_request_id,
+        confirmation_gate,
+        credit_id,
+        reset_title,
+        reset_detail,
+        reset_description,
+    }) = rx.try_recv()
+    else {
+        panic!("expected second reset confirmation event");
+    };
+    assert_eq!(reset_title, "Second reset");
+    assert!(!chat.show_rate_limit_reset_confirmation(
+        picker_request_id,
+        confirmation_gate,
+        credit_id,
+        reset_title,
+        reset_detail,
+        reset_description,
+    ));
+
+    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+    chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+    show_rate_limit_reset_confirmation_from_event(&mut chat, &mut rx);
+
+    assert!(render_bottom_popup(&chat, /*width*/ 80).contains("Second reset · Does not expire."));
+}
+
+#[tokio::test]
 async fn rate_limit_reset_picker_starts_with_soonest_expiries_and_keeps_all_rows_reachable() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     let request_id = chat.show_rate_limit_reset_loading_popup();
