@@ -2,6 +2,12 @@
 
 `00-study/codex-agent-learning` 分支用于学习 `openai/codex` 的源码和 agent 运行机制。`main` 分支保持紧跟上游，本分支保存笔记、实验和阅读路线，并用 `00-` 前缀让它在分支列表中更靠前。
 
+## 学习约定
+
+- [学习目标和原则](goal-and-principles.md)
+- [Codex 架构阅读路线](codex-architecture.md)
+- [Agent 机制笔记](agent-notes.md)
+
 ## 仓库入口
 
 - `README.md`：产品定位、安装方式和官方文档入口。
