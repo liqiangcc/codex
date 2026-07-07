@@ -7,6 +7,7 @@
 - [学习目标和原则](goal-and-principles.md)
 - [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)
 - [Codex CLI 功能地图](feature-map.md)
+- [学习体系维护手册](maintenance.md)
 - [学习方法探索](learning-method.md)
 - [Codex 架构阅读路线](codex-architecture.md)
 - [Agent 机制笔记](agent-notes.md)
