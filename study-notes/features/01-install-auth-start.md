@@ -66,9 +66,10 @@
 3. 确认版本：`codex --version`。
 4. 如果未登录或要切换账号，运行 `codex login`。
 5. 运行 `codex doctor`，记录明显异常。
-6. 用只读 prompt 启动最小任务：`codex "Summarize this repository in 5 bullets"`。
-7. 在 TUI 内用 `/status` 确认模型、权限、工作目录、上下文容量。
-8. 如果只是初始化 shell 体验，再安装 completion。
+6. 在真实终端里用只读 prompt 启动最小交互任务：`codex "Summarize this repository in 5 bullets"`。
+7. 在非交互 shell 里用 `exec` 验证一次性任务：`codex --ask-for-approval never exec --sandbox read-only --color never "Summarize this repository in 5 bullets"`。
+8. 在 TUI 内用 `/status` 确认模型、权限、工作目录、上下文容量。
+9. 如果只是初始化 shell 体验，再安装 completion。
 
 ## 9. 最佳实践
 
@@ -104,15 +105,20 @@
 git status --short --branch
 codex --version
 codex doctor
-codex "Summarize this repository in 5 bullets"
+codex --ask-for-approval never exec --sandbox read-only --color never "Summarize this repository in 5 bullets"
 ```
 
 通过标准：
 
 - `codex --version` 能正常输出。
 - `codex doctor` 没有阻断性错误，或者错误已经被记录为待处理事项。
-- 最小 prompt 能在目标仓库运行。
+- 最小 `exec` prompt 能在目标仓库运行。
 - 输出不要求完全正确，但必须能证明 Codex 读到了当前仓库上下文。
+
+命令位置约束：
+
+- 当前版本中 `--ask-for-approval` 是 `codex` 顶层参数，放在 `exec` 前面；`codex exec --ask-for-approval never ...` 会报 `unexpected argument`。
+- `codex "prompt"` 属于交互式入口，在非 TTY shell 中可能直接失败并提示 `stdin is not a terminal`；非交互验证优先使用 `codex exec`。
 
 ## 13. 最小练习
 
@@ -121,7 +127,7 @@ codex "Summarize this repository in 5 bullets"
 1. 运行 `git status --short --branch`。
 2. 运行 `codex --version`。
 3. 运行 `codex doctor`，只记录诊断项类型，不记录敏感值。
-4. 启动一次只读解释任务。
+4. 用 `codex exec` 启动一次只读解释任务。
 5. 在 issue #1 记录：版本、认证方式类型、当前目录、doctor 是否有异常、下一步。
 
 ## 14. 进阶练习
@@ -178,11 +184,29 @@ codex "Summarize this repository in 5 bullets"
 
 ## 18. 待解决问题
 
-- 本机当前 Codex CLI 是发布包、源码构建，还是 app 内部捆绑版本？
-- `codex doctor` 哪些字段适合作为每次学习前的固定检查项？
+- 还需要在真实 TUI 中执行一次 `/status`，把交互式界面的模型、权限、工作目录和上下文字段补齐。
 - `CODEX_HOME` 改变后，哪些状态会重新初始化，哪些仍来自系统或环境？
 - ChatGPT 登录和 API key 登录在本学习目标下分别会限制哪些功能？
+- 当前 CLI 提示已有 `0.143.0` 更新，是否立即升级需要结合学习目标决定：先固定基线便于复现，还是先升级到最新版本便于贴近上游。
 
 ## 19. 当前结论
 
 安装、登录、启动的目标不是“能打开 Codex”这么简单，而是建立可复现的运行基线。阶段 1 每次学习前都应先确认分支、版本、认证和诊断状态；一旦遇到异常，先回到这个基线排查，再进入具体功能。
+
+2026-07-08 基线记录：
+
+- 当前分支是 `00-study/codex-agent-learning`，工作区开始时干净。
+- `codex --version` 输出 `codex-cli 0.142.5`。
+- 当前 CLI 来自 npm 安装的发布包；`codex doctor` 显示 runtime/install method 为 npm，安装一致。
+- `codex doctor` 结果为 `16 ok · 1 idle · 2 notes · 0 warn · 1 fail`。
+- 这个 `fail` 来自当前非交互 shell 的终端环境：`TERM=dumb`，颜色和光标控制不可用；它不是认证失败，也不是模型不可用。
+- `doctor` 提示有新版本 `0.143.0` 可用；在升级前，学习记录应继续注明当前基线版本，避免把版本差异误判为功能差异。
+- 当前认证状态已配置，存储模式为 File，stored auth mode 为 ChatGPT，未保存 API key，已保存 ChatGPT tokens。记录 issue 或文档时只写认证类型，不写 token、账号标识或 auth 文件内容。
+- 当前默认模型为 `gpt-5.5`，provider 为 `openai`，MCP servers 为 `0`。
+- 当前配置文件为 `~/.codex/config.toml`，解析正常。
+- 当前 sandbox/approval 基线来自 `doctor`：restricted filesystem + restricted network，approval policy 为 `OnRequest`。
+- `codex "Summarize this repository in 5 bullets"` 在非 TTY shell 中失败，错误是 `stdin is not a terminal`；这个命令仍适合真实终端/TUI，不适合作为自动化基线。
+- `codex --ask-for-approval never exec --sandbox read-only --color never "Summarize this repository in 5 bullets"` 在非交互环境中跑通，显示 workdir、model、provider、approval、sandbox 和 session id，并能读取仓库文件后生成五点摘要。
+- 当前版本的参数位置要特别注意：`--ask-for-approval` 必须放在 `exec` 前面；把它放在 `exec` 后会被 `codex exec` 解析为未知参数。
+
+本功能的阶段 1 验收暂定为：`version`、`doctor`、非交互 `exec` 已跑通，再补一次真实 TUI `/status` 后，才能从 `In Progress` 进入 `Done`。
