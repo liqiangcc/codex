@@ -6,6 +6,8 @@
 
 - [学习目标和原则](goal-and-principles.md)
 - [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)
+- [学习阶段目标](stage-goals.md)
+- [阶段 2：核心源码链路](stage-2-source-reading.md)
 - [Codex CLI 功能地图](feature-map.md)
 - [Codex CLI 详细功能文档](features/)
 - [学习体系维护手册](maintenance.md)
