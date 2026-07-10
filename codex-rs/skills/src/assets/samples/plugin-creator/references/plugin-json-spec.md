@@ -62,7 +62,7 @@
 - `license` (`string`): License identifier (for example `MIT`, `Apache-2.0`).
 - `keywords` (`array` of `string`): Search/discovery tags.
 - `skills` (`string`): Relative path to skill directories/files.
-- `hooks` (`string`): Hook config path.
+- `hooks` (`string`, array of strings, object, or array of objects): Hook config path(s) or inline hook declaration(s).
 - `mcpServers` (`string` or `object`): MCP config path, or an object whose keys are MCP server names and whose values are MCP server config objects.
 - `apps` (`string`): App manifest path for plugin integrations.
 - `interface` (`object`): Interface/UX metadata block for plugin presentation.
@@ -212,7 +212,7 @@ personal marketplace unless the caller explicitly requests a repo-local destinat
 - `apps` should appear in `plugin.json` only when `.app.json` actually exists.
 - `mcpServers` may point to `.mcp.json` or contain the MCP server object directly in
   `plugin.json`.
-- Validation rejects unsupported manifest fields such as `hooks`, so the scaffold keeps them out of
-  generated manifests.
+- `hooks` may point to one or more hook JSON files or contain inline hook declarations, matching
+  the workspace plugin ingestion schema.
 - Run `scripts/validate_plugin.py <plugin-path>` before handing back a generated plugin. It adds one
   intentional preflight check that rejects leftover `[TODO: ...]` placeholders.

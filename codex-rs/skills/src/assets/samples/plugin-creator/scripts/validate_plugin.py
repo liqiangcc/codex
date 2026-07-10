@@ -99,6 +99,7 @@ def validate_manifest_shape(
         "description",
         "skills",
         "apps",
+        "hooks",
         "mcpServers",
         "interface",
         "author",
@@ -126,6 +127,7 @@ def validate_manifest_shape(
 
     validate_optional_contract_path(manifest, "skills", "skills", errors)
     validate_optional_contract_path(manifest, "apps", ".app.json", errors)
+    validate_manifest_hooks(plugin_root, manifest, errors)
     validate_manifest_mcp_servers(plugin_root, manifest, errors)
 
     if manifest.get("apps") is not None:
@@ -306,6 +308,98 @@ def validate_manifest_mcp_servers(
         )
         return
     errors.append("plugin.json field `mcpServers` must be a string path or object")
+
+
+def validate_manifest_hooks(
+    plugin_root: Path,
+    manifest: dict[str, Any],
+    errors: list[str],
+) -> None:
+    value = manifest.get("hooks")
+    if value is None:
+        return
+    if isinstance(value, str):
+        validate_hooks_file(plugin_root, value, errors)
+        return
+    if isinstance(value, dict):
+        validate_hooks_object(value, "plugin.json field `hooks`", errors)
+        return
+    if isinstance(value, list):
+        if not value:
+            errors.append("plugin.json field `hooks` must not be an empty array")
+            return
+        if all(isinstance(item, str) for item in value):
+            for raw_path in value:
+                validate_hooks_file(plugin_root, raw_path, errors)
+            return
+        if all(isinstance(item, dict) for item in value):
+            for index, hooks in enumerate(value):
+                validate_hooks_object(
+                    hooks,
+                    f"plugin.json field `hooks[{index}]`",
+                    errors,
+                )
+            return
+    errors.append(
+        "plugin.json field `hooks` must be a string, string array, object, or object array"
+    )
+
+
+def validate_hooks_file(
+    plugin_root: Path,
+    raw_path: str,
+    errors: list[str],
+) -> None:
+    path = resolve_plugin_path(plugin_root, raw_path, "hooks", errors)
+    if path is None:
+        return
+    if not path.is_file():
+        errors.append(f"hooks file `{raw_path}` does not exist")
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        errors.append(f"hooks file `{raw_path}` must contain valid JSON")
+        return
+    validate_hooks_object(payload, f"hooks file `{raw_path}`", errors)
+
+
+def resolve_plugin_path(
+    plugin_root: Path,
+    raw_path: str,
+    field: str,
+    errors: list[str],
+) -> Path | None:
+    if not raw_path.startswith("./") or raw_path == "./":
+        errors.append(f"plugin.json field `{field}` paths must start with `./`")
+        return None
+    candidate = PurePosixPath(raw_path[2:].replace("\\", "/"))
+    if candidate.is_absolute() or any(part in {"", ".", ".."} for part in candidate.parts):
+        errors.append(f"plugin.json field `{field}` paths must stay inside the plugin archive")
+        return None
+    resolved = (plugin_root / candidate.as_posix()).resolve()
+    if not resolved.is_relative_to(plugin_root.resolve()):
+        errors.append(f"plugin.json field `{field}` paths must stay inside the plugin archive")
+        return None
+    return resolved
+
+
+def validate_hooks_object(
+    payload: Any,
+    label: str,
+    errors: list[str],
+) -> None:
+    if not isinstance(payload, dict):
+        errors.append(f"{label} must contain a JSON object")
+        return
+    reject_companion_unknown_fields(payload, {"description", "hooks"}, label, errors)
+    description = payload.get("description")
+    if description is not None and (
+        not isinstance(description, str) or not description.strip()
+    ):
+        errors.append(f"{label} field `description` must be a non-empty string")
+    if not isinstance(payload.get("hooks"), dict):
+        errors.append(f"{label} field `hooks` must be an object")
 
 
 def normalize_contract_path(raw_path: str) -> str | None:
