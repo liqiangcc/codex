@@ -32,7 +32,7 @@
 | 配置系统 | Todo | [#7](https://github.com/liqiangcc/codex/issues/7) | [07-configuration.md](features/07-configuration.md) |
 | 工具和扩展 | Todo | [#8](https://github.com/liqiangcc/codex/issues/8) | [08-tools-and-extensions.md](features/08-tools-and-extensions.md) |
 | 调试和诊断 | Todo | [#9](https://github.com/liqiangcc/codex/issues/9) | [09-debugging-and-diagnostics.md](features/09-debugging-and-diagnostics.md) |
-| Git 和协作 | Todo | [#10](https://github.com/liqiangcc/codex/issues/10) | [10-git-and-collaboration.md](features/10-git-and-collaboration.md) |
+| Git 和协作 | In Progress | [#10](https://github.com/liqiangcc/codex/issues/10) | [10-git-and-collaboration.md](features/10-git-and-collaboration.md) |
 
 ## 阶段 1 功能覆盖清单
 
