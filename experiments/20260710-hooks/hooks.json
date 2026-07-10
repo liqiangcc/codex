@@ -1,0 +1,17 @@
+{
+  "description": "Read-only Stop-hook experiment for the Codex learning branch.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 experiments/20260710-hooks/stop_hook.py",
+            "timeout": 5,
+            "statusMessage": "Checking the read-only study Stop hook"
+          }
+        ]
+      }
+    ]
+  }
+}

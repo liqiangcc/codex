@@ -1,0 +1,4 @@
+{
+  "cwd": "/isolated/study-project",
+  "hook_event_name": "PostToolUse"
+}

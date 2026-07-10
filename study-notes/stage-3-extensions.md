@@ -14,12 +14,12 @@
 
 | 顺序 | 主题 | 必须回答的问题 | 源码入口 | 最小实验 | 计划 issue |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 扩展决策 | 什么情况下用 prompt、guidance、skill、MCP、hook、plugin？ | `study-notes/features/08-tools-and-extensions.md` | 为 5 个重复流程做扩展层级决策表 | `[Extension Study] 扩展层级决策` |
-| 2 | Skills | skill 如何发现、匹配、注入指令和依赖？ | `codex-rs/core-skills/`、`codex-rs/skills/` | 创建只含 instructions 的本地 skill 并显式调用 | `[Extension Study] Skills 生命周期` |
-| 3 | MCP | server/tool 如何进入 step runtime，approval 如何合并？ | `codex-rs/codex-mcp/`、`core/src/session/mcp.rs` | 用只读 MCP 完成一次启动、调用、失败和清理 | `[Extension Study] MCP 工具与权限` |
-| 4 | Hooks | hook 的发现、trust、matcher、事件和失败语义是什么？ | `codex-rs/hooks/`、`core/src/hook_runtime.rs` | 在临时项目验证一个只读 Stop hook | `[Extension Study] Hooks 生命周期` |
-| 5 | Plugins | plugin 如何打包 skills、MCP、apps 并进入 marketplace/cache？ | `codex-rs/core-plugins/`、`codex-rs/plugin/` | 检查一个 personal plugin 的 manifest、安装、升级和禁用边界 | `[Extension Study] Plugin 分发` |
-| 6 | 综合扩展 | 一个真实学习流程应该由哪些组件组成？ | 上述模块和 `study-notes/maintenance.md` | 为“观察 TUI 并记录结果”做端到端架构复盘 | `[Extension Study] 学习自动化闭环` |
+| 1 | 扩展决策 | 什么情况下用 prompt、guidance、skill、MCP、hook、plugin？ | `study-notes/features/08-tools-and-extensions.md` | 为 5 个重复流程做扩展层级决策表 | [#12](https://github.com/liqiangcc/codex/issues/12) |
+| 2 | Skills | skill 如何发现、匹配、注入指令和依赖？ | `codex-rs/core-skills/`、`codex-rs/skills/` | 创建只含 instructions 的本地 skill 并显式调用 | [#13](https://github.com/liqiangcc/codex/issues/13) |
+| 3 | MCP | server/tool 如何进入 step runtime，approval 如何合并？ | `codex-rs/codex-mcp/`、`core/src/session/mcp.rs` | 用只读 MCP 完成一次启动、调用、失败和清理 | [#14](https://github.com/liqiangcc/codex/issues/14) |
+| 4 | Hooks | hook 的发现、trust、matcher、事件和失败语义是什么？ | `codex-rs/hooks/`、`core/src/hook_runtime.rs` | 在临时项目验证一个只读 Stop hook | [#15](https://github.com/liqiangcc/codex/issues/15) |
+| 5 | Plugins | plugin 如何打包 skills、MCP、apps 并进入 marketplace/cache？ | `codex-rs/core-plugins/`、`codex-rs/plugin/` | 检查一个 personal plugin 的 manifest、安装、升级和禁用边界 | [#16](https://github.com/liqiangcc/codex/issues/16) |
+| 6 | 综合扩展 | 一个真实学习流程应该由哪些组件组成？ | 上述模块和 `study-notes/maintenance.md` | 为“观察 TUI 并记录结果”做端到端架构复盘 | [#17](https://github.com/liqiangcc/codex/issues/17) |
 
 ## 学习顺序
 
@@ -49,11 +49,19 @@
 
 ## 完成标准
 
-- [ ] 六个主题全部完成并有源码与行为证据。
-- [ ] 能根据需求说明为什么选择某种扩展层级。
-- [ ] 综合扩展覆盖启动、调用、权限、错误、清理和升级路径。
-- [ ] 未在仓库或 issue 中保存 token、账号数据或真实 secret。
-- [ ] 所有实验可关闭或卸载，且不会扩大 Codex 默认权限。
+- [x] 六个主题全部完成并有源码与行为证据。
+- [x] 能根据需求说明为什么选择某种扩展层级。
+- [x] 综合扩展覆盖启动、调用、权限、错误、清理和升级路径。
+- [x] 未在仓库或 issue 中保存 token、账号数据或真实 secret。
+- [x] 所有实验可关闭或卸载，且不会扩大 Codex 默认权限。
+
+## 验收摘要（2026-07-10）
+
+- 六主题源码与行为记录见 [阶段三证据索引](extensions/README.md)。
+- personal plugin 已新增 `$observe-codex-study`，Skill/Plugin 校验通过，并以 cachebuster `0.1.0+codex.20260710145859` 重装。
+- 全新只读子 Codex 的 `/skills` 列表可发现新 Skill；MCP 的启动、UI 调用、未知 session 失败和显式 stop 均已验证。
+- Stop Hook handler 的有效/无效 fixture 分别退出 0/2，`codex-hooks` 测试 120/120 通过。
+- Issues [#12](https://github.com/liqiangcc/codex/issues/12)–[#17](https://github.com/liqiangcc/codex/issues/17) 已完成并关闭。
 
 ## 阶段边界
 

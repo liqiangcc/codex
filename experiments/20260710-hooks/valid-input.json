@@ -1,0 +1,11 @@
+{
+  "cwd": "/isolated/study-project",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "done",
+  "model": "test-model",
+  "permission_mode": "dontAsk",
+  "session_id": "redacted-session",
+  "stop_hook_active": false,
+  "transcript_path": null,
+  "turn_id": "redacted-turn"
+}
