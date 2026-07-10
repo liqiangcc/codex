@@ -206,3 +206,5 @@ Before editing, restate the task, list the files you need to inspect, list files
 ## 19. 当前结论
 
 任务上下文是用好 Codex 的核心杠杆。阶段 1 的原则是：让一次任务的上下文足够具体、来源清楚、风险可控，并把长期有效的上下文从聊天迁移到文档、`AGENTS.md` 或 issue。
+
+2026-07-10 最小练习结果：同一“改进交互式 coding agent 学习笔记”目标在没有文件上下文时，Plan A 只能提出通用的重组、示例和检查清单；读取 `study-notes/features/02-interactive-coding-agent.md` 后，Plan B 收敛到该文件、`learning-method.md`、issue #2、`git diff --check`、版本化 TUI 行为与明确的缺失信息。结论是目标之外至少应提供路径、验收标准和禁止事项；这些信息把抽象建议转换为可审阅的工程计划。

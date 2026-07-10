@@ -223,3 +223,5 @@ codex -c model='"gpt-5.5"' -c web_search='"disabled"' "Report the active model a
 ## 19. 当前结论
 
 配置系统的学习重点是优先级和职责边界。阶段 1 不追求记住所有 key，而要能判断“这个行为应该放在哪里、如何临时覆盖、如何验证生效、如何避免长期配置污染”。
+
+2026-07-10 最小练习结果：`/debug-config` 显示当前生效层按低到高为 system `/etc/codex/config.toml`、user `~/.codex/config.toml`、project `~/codex/.codex/config.toml`；requirements 为空。`codex features list` 可列出 feature 的成熟度和生效值，`codex doctor` 确认 user config 解析正常。结论是项目配置确实参与当前会话，但单次实验应优先用 `-c` 或 profile，避免污染用户默认配置。

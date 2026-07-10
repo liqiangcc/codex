@@ -229,3 +229,5 @@ codex exec --json "Summarize this repository" | jq -r '.type'
 ## 19. 当前结论
 
 非交互执行适合“目标清楚、输入明确、输出可验证”的任务。它的核心能力不是省掉 TUI，而是把 Codex 纳入命令行自动化；因此必须更重视 prompt 完整性、权限最小化、退出码、结构化输出和 diff 检查。
+
+2026-07-10 最小练习结果：缺少明确路径的 `Summarize study-notes` prompt 因搜索范围不足而无法完成，说明非交互任务不能依赖隐含上下文；指定 `study-notes/goal-and-principles.md` 后，普通只读执行退出码为 0、未产生 diff，但模型重复了五条摘要，说明自然语言数量约束仍需人工或 schema 验证。JSONL 只读执行同样退出码为 0，稳定出现 `thread.started`、`turn.started`、`item.started`、`item.completed`、`turn.completed`，更适合脚本消费。

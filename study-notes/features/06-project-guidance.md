@@ -213,3 +213,5 @@ codex --cd codex-rs/tui --ask-for-approval never "List the active instruction so
 ## 19. 当前结论
 
 项目约定的价值在于减少重复说明和降低行为漂移。阶段 1 应先保持 `AGENTS.md` 小而准：写长期、可执行、可验证的规则；一次性目标继续放 prompt；学习过程和结论分别放 issue 与 feature docs。
+
+2026-07-10 最小练习结果：已阅读仓库根 `AGENTS.md`，并确认三类日常高价值规则：Rust 改动完成后运行 `just fmt` 与相关 `just test`；不得修改 sandbox 环境变量相关逻辑；TUI 可见变更必须更新 `insta` snapshot。它们分别约束验证、运行安全和界面回归，适合长期项目 guidance；单次学习目标仍应写在 prompt 或 issue。

@@ -24,15 +24,15 @@
 | 功能 | 状态 | Issue | 详细文档 |
 | --- | --- | --- | --- |
 | 安装、登录、启动 | Done | [#1](https://github.com/liqiangcc/codex/issues/1) | [01-install-auth-start.md](features/01-install-auth-start.md) |
-| 交互式 coding agent | In Progress | [#2](https://github.com/liqiangcc/codex/issues/2) | [02-interactive-coding-agent.md](features/02-interactive-coding-agent.md) |
-| 非交互执行 | Todo | [#3](https://github.com/liqiangcc/codex/issues/3) | [03-non-interactive-exec.md](features/03-non-interactive-exec.md) |
-| 任务上下文 | Todo | [#4](https://github.com/liqiangcc/codex/issues/4) | [04-task-context.md](features/04-task-context.md) |
-| 权限和安全 | Todo | [#5](https://github.com/liqiangcc/codex/issues/5) | [05-permissions-and-safety.md](features/05-permissions-and-safety.md) |
-| 项目约定 | Todo | [#6](https://github.com/liqiangcc/codex/issues/6) | [06-project-guidance.md](features/06-project-guidance.md) |
-| 配置系统 | Todo | [#7](https://github.com/liqiangcc/codex/issues/7) | [07-configuration.md](features/07-configuration.md) |
-| 工具和扩展 | Todo | [#8](https://github.com/liqiangcc/codex/issues/8) | [08-tools-and-extensions.md](features/08-tools-and-extensions.md) |
-| 调试和诊断 | Todo | [#9](https://github.com/liqiangcc/codex/issues/9) | [09-debugging-and-diagnostics.md](features/09-debugging-and-diagnostics.md) |
-| Git 和协作 | In Progress | [#10](https://github.com/liqiangcc/codex/issues/10) | [10-git-and-collaboration.md](features/10-git-and-collaboration.md) |
+| 交互式 coding agent | Done | [#2](https://github.com/liqiangcc/codex/issues/2) | [02-interactive-coding-agent.md](features/02-interactive-coding-agent.md) |
+| 非交互执行 | Done | [#3](https://github.com/liqiangcc/codex/issues/3) | [03-non-interactive-exec.md](features/03-non-interactive-exec.md) |
+| 任务上下文 | Done | [#4](https://github.com/liqiangcc/codex/issues/4) | [04-task-context.md](features/04-task-context.md) |
+| 权限和安全 | Done | [#5](https://github.com/liqiangcc/codex/issues/5) | [05-permissions-and-safety.md](features/05-permissions-and-safety.md) |
+| 项目约定 | Done | [#6](https://github.com/liqiangcc/codex/issues/6) | [06-project-guidance.md](features/06-project-guidance.md) |
+| 配置系统 | Done | [#7](https://github.com/liqiangcc/codex/issues/7) | [07-configuration.md](features/07-configuration.md) |
+| 工具和扩展 | Done | [#8](https://github.com/liqiangcc/codex/issues/8) | [08-tools-and-extensions.md](features/08-tools-and-extensions.md) |
+| 调试和诊断 | Done | [#9](https://github.com/liqiangcc/codex/issues/9) | [09-debugging-and-diagnostics.md](features/09-debugging-and-diagnostics.md) |
+| Git 和协作 | Done | [#10](https://github.com/liqiangcc/codex/issues/10) | [10-git-and-collaboration.md](features/10-git-and-collaboration.md) |
 
 ## 阶段 1 功能覆盖清单
 
@@ -77,7 +77,7 @@
 | plugins、`codex plugin`、`/plugins` | 工具和扩展 | 基础 | 先理解分发和安装，不做插件开发。 |
 | apps/connectors、`/apps` | 工具和扩展 | 浅用 | 当前阶段只了解概念、授权和数据边界。 |
 | subagents、`/agent` | 工具和扩展；任务上下文 | 可选 | 阶段 1 不作为必学项，后续作为高级 agent 主题。 |
-| `/status`、`/usage`、`/debug-config` | 调试和诊断 | 深入 | 用于确认模型、权限、上下文、用量和配置。 |
+| `/status`、`/debug-config` | 调试和诊断 | 深入 | 用于确认模型、权限、上下文和配置；学习流程禁止执行 `/usage`，避免触发额度重置。 |
 | `codex debug models` | 调试和诊断；配置系统 | 基础 | 用于理解模型目录和排查模型问题。 |
 | `/ps`、`/stop`、后台命令状态 | 调试和诊断 | 基础 | 用于处理长时间运行或卡住的命令。 |
 | `/feedback` | 调试和诊断 | 浅用 | 只在需要反馈问题时使用，提交前要脱敏。 |

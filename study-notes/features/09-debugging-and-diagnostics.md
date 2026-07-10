@@ -37,7 +37,7 @@ Codex 失败原因很多：认证失效、模型不可用、配置冲突、sandb
 - `codex doctor` 面向安装、配置、认证、runtime、Git、terminal、app-server、thread inventory 等本地问题。
 - `/status` 面向当前 session 状态。
 - `/debug-config` 面向配置层、requirements、实验网络约束等。
-- `/usage` 面向账号 token 使用和 rate limit 信息。
+- `/usage` 面向账号 token 使用和 rate limit 信息；本学习流程禁止执行它，避免触发额度重置。
 - `/ps`、`/stop` 面向后台终端。
 - `/feedback` 用于向维护者反馈问题，分享前必须脱敏。
 
@@ -48,6 +48,7 @@ Codex 失败原因很多：认证失效、模型不可用、配置冲突、sandb
 - 先做最小复现，再提交大段日志。
 - 如果任务失败来自权限或配置，先记录实际状态，不要直接放宽到 full access。
 - 对当前日期、版本、模型、上游文档变化保持敏感，必要时重新查 manual。
+- 不执行 `/usage`，也不把它作为诊断或实验步骤；额度与 rate limit 信息不能成为学习任务的验证依赖。
 
 ## 7. 用户入口
 
@@ -56,7 +57,7 @@ Codex 失败原因很多：认证失效、模型不可用、配置冲突、sandb
 - `codex --version`：版本。
 - `codex debug models`、`codex debug models --bundled`：模型 catalog。
 - `/status`：session 配置、token、权限、workspace。
-- `/usage`：账号用量。
+- `/usage`：账号用量；本学习流程禁止执行。
 - `/debug-config`：配置层诊断。
 - `/ps`：查看后台终端和最近输出。
 - `/stop`：停止后台终端。
@@ -140,7 +141,6 @@ TUI 内：
 ```text
 /status
 /debug-config
-/usage
 ```
 
 非交互：
@@ -231,7 +231,6 @@ codex exec --json --sandbox read-only "Summarize this repository" | jq -r '.type
 ## 18. 待解决问题
 
 - `codex doctor --json` 当前版本是否稳定，字段如何命名？
-- `/usage` 的数据来源和 rate limit 显示逻辑在哪里？
 - `/ps` 和 `/stop` 管理的是哪些后台进程，跨 turn 是否保留？
 - feedback 上传包含哪些日志，哪些需要用户确认？
 - 哪些诊断信息适合写入公开 GitHub issue？
@@ -239,3 +238,5 @@ codex exec --json --sandbox read-only "Summarize this repository" | jq -r '.type
 ## 19. 当前结论
 
 调试和诊断要先事实后修复。阶段 1 应形成固定诊断包：版本、doctor、status、debug-config、Git 状态、最小复现、脱敏说明。这样遇到问题时才能定位到环境、配置、权限、上下文或真实 bug。
+
+2026-07-10 最小练习结果：`codex --version` 为 `0.144.1`；`codex doctor` 确认 npm 安装、配置解析、认证状态、Git 仓库和本地 state 数据库均正常；`/status` 已验证当前会话模型、目录、权限和上下文；`/debug-config` 显示三层配置栈。诊断模板固定记录现象、期望、复现命令、版本、doctor/status/debug-config、Git 状态、脱敏字段和下一步；不执行 `/usage`，避免将额度重置引入诊断流程。

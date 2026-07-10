@@ -228,3 +228,5 @@ Hook 验证：
 ## 19. 当前结论
 
 工具和扩展应按成熟度递进：一次性任务用 prompt，长期仓库规则用 `AGENTS.md`，重复流程用 skill，需要外部系统用 MCP/app connector，要分发再用 plugin。阶段 1 重点是分辨边界和风险，不急于开发复杂扩展。
+
+2026-07-10 最小练习结果：`/skills`、`/hooks`、`/plugins`、`/apps` 均打开对应管理入口；`/mcp` 显示当前会话的 `codex_apps` 工具服务。CLI `codex mcp list` 显示本地 `codex-tui-observer` MCP 已启用，`codex plugin list` 显示它由 personal marketplace 安装。结论是 skill 负责任务流程，MCP 暴露工具，plugin 打包分发这些能力；学习观察器应保持只读，避免把观测能力扩展为默认写权限。
