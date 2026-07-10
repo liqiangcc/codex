@@ -4,6 +4,19 @@
 
 本阶段回答一个问题：一次用户输入如何从 CLI 进入 core，变成模型请求和工具调用，最后把结果写回会话历史？以下结论均来自当前分支源码；行为层证据来自阶段 1 已记录的 `codex exec` JSONL、权限和 TUI 命令观察。
 
+## 主题矩阵
+
+| 顺序 | 主题 | 核心问题 | 主要源码 | 完成证据 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | CLI 分流 | TUI、exec、review 如何进入不同外层入口？ | `codex-rs/cli/src/main.rs` | 标出 `cli_main` 的主要分支 | Done |
+| 2 | 用户输入 | 新 turn、steer、pending input 如何区分？ | `core/src/session/handlers.rs`、`input_queue.rs` | 写出 `UserTurn -> TurnInput -> RegularTask` | Done |
+| 3 | 模型采样 | history、context、tools 如何形成请求？ | `core/src/tasks/regular.rs`、`session/turn.rs` | 写出 sampling 与 follow-up 循环 | Done |
+| 4 | 工具运行 | tool call 如何路由并受权限约束？ | `core/src/tools/router.rs`、`orchestrator.rs` | 解释 approval、sandbox、retry 顺序 | Done |
+| 5 | 上下文压缩 | compact 如何替换 history 又保持关键上下文？ | `core/src/compact.rs`、`tasks/compact.rs` | 解释 summary、initial context、history replacement | Done |
+| 6 | MCP runtime | MCP tools 为什么不是静态全局列表？ | `core/src/session/mcp.rs`、`codex-rs/codex-mcp/` | 解释 step-scoped runtime snapshot | Done |
+
+每个主题的最低完成证据相同：一个具体问题、一组源码路径、关键输入/输出、至少一个不变量、一个行为证据或测试入口，以及仍未解决的问题。只列目录不算完成。
+
 ## 端到端链路
 
 ```text
@@ -59,14 +72,15 @@ CLI 参数
 
 不变量：MCP 工具不是静态全局列表；它取决于当前 turn 配置、可用环境、认证与 runtime snapshot。
 
-## 阶段 2 验收
+## 完成标准（阶段 2 验收）
 
 - [x] 从 CLI 到模型采样和工具回填的链路已定位。
 - [x] 已识别用户输入、history、step context、tool router 和 runtime 的职责边界。
 - [x] 已解释 approval/sandbox、compaction、MCP runtime 的介入点。
 - [x] 已将结论与阶段 1 的 JSONL、权限和 TUI 行为实验交叉检查。
+- [x] 六个主题均有问题、源码入口、不变量和完成证据。
 
-## 未深入的内容
+## 阶段边界（未深入内容）
 
 - 每个 slash command 的 UI 渲染与 state machine。
 - 各工具 handler 的平台差异和所有 retry 分支。

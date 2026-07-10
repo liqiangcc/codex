@@ -8,6 +8,8 @@
 - [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)
 - [学习阶段目标](stage-goals.md)
 - [阶段 2：核心源码链路](stage-2-source-reading.md)
+- [阶段 3：扩展与运行机制](stage-3-extensions.md)
+- [阶段 4：上游协作与贡献](stage-4-upstream-contribution.md)
 - [Codex CLI 功能地图](feature-map.md)
 - [Codex CLI 详细功能文档](features/)
 - [学习体系维护手册](maintenance.md)
