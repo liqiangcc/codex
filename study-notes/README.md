@@ -11,6 +11,7 @@
 - [阶段 3：扩展与运行机制](stage-3-extensions.md)
 - [阶段 3：六主题证据索引](extensions/README.md)
 - [阶段 4：上游协作与贡献](stage-4-upstream-contribution.md)
+- [阶段 4：贡献闭环证据索引](contributions/README.md)
 - [Codex CLI 功能地图](feature-map.md)
 - [Codex CLI 详细功能文档](features/)
 - [学习体系维护手册](maintenance.md)

@@ -14,12 +14,12 @@
 
 | 顺序 | 主题 | 必须回答的问题 | 证据入口 | 最小任务 | 计划 issue |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 上游同步 | 如何保持 `main`、学习分支和贡献分支职责分离？ | `study-notes/maintenance.md`、`docs/contributing.md` | 完成一次无冲突同步演练并记录分支图 | `[Contribution Study] 分支与上游同步` |
-| 2 | 问题诊断 | 这是 bug、配置问题、预期行为还是缺少信息？ | issue、日志、最小复现、相关测试 | 为一个真实问题写诊断报告 | `[Contribution Study] 问题诊断与复现` |
-| 3 | 根因与设计 | 哪个最小代码路径导致行为，变更边界是什么？ | 阶段二源码链路、breaking-change 清单 | 写出根因、候选方案和取舍 | `[Contribution Study] 根因与变更设计` |
-| 4 | 实现与测试 | 如何用最小 diff 修复并覆盖用户行为？ | crate tests、integration tests、snapshots、CI | 完成一个小修复及相关测试 | `[Contribution Study] 最小实现与验证` |
-| 5 | Review 与 PR | 如何让 reviewer 快速理解影响、证据和风险？ | `.github/pull_request_template.md`、`/review` | 完成本地 review 和 draft PR 描述 | `[Contribution Study] Review 与 PR` |
-| 6 | 反馈闭环 | 如何处理 CI、review comments、冲突和后续维护？ | checks、review threads、commit history | 处理一轮真实或模拟反馈 | `[Contribution Study] 反馈与维护` |
+| 1 | 上游同步 | 如何保持 `main`、学习分支和贡献分支职责分离？ | `study-notes/maintenance.md`、`docs/contributing.md` | 完成一次无冲突同步演练并记录分支图 | [#18](https://github.com/liqiangcc/codex/issues/18) |
+| 2 | 问题诊断 | 这是 bug、配置问题、预期行为还是缺少信息？ | issue、日志、最小复现、相关测试 | 为一个真实问题写诊断报告 | [#19](https://github.com/liqiangcc/codex/issues/19) |
+| 3 | 根因与设计 | 哪个最小代码路径导致行为，变更边界是什么？ | 阶段二源码链路、breaking-change 清单 | 写出根因、候选方案和取舍 | [#20](https://github.com/liqiangcc/codex/issues/20) |
+| 4 | 实现与测试 | 如何用最小 diff 修复并覆盖用户行为？ | crate tests、integration tests、snapshots、CI | 完成一个小修复及相关测试 | [#21](https://github.com/liqiangcc/codex/issues/21) |
+| 5 | Review 与 PR | 如何让 reviewer 快速理解影响、证据和风险？ | `.github/pull_request_template.md`、`/review` | 完成本地 review 和 draft PR 描述 | [#22](https://github.com/liqiangcc/codex/issues/22) |
+| 6 | 反馈闭环 | 如何处理 CI、review comments、冲突和后续维护？ | checks、review threads、commit history | 处理一轮真实或模拟反馈 | [#23](https://github.com/liqiangcc/codex/issues/23) |
 
 ## 学习顺序
 
@@ -47,11 +47,20 @@
 
 ## 完成标准
 
-- [ ] 六个主题全部完成并留下证据。
-- [ ] 至少一个问题完成“复现 → 根因 → 修复 → 测试 → review”闭环。
-- [ ] 对 app-server API、CLI、配置、rollout 恢复等 breaking surfaces 做过明确检查。
-- [ ] 相关格式化、目标 crate 测试和必要 lint 均通过。
-- [ ] 能处理至少一轮 CI 或 review feedback，不覆盖用户已有改动。
+- [x] 六个主题全部完成并留下证据。
+- [x] 至少一个问题完成“复现 → 根因 → 修复 → 测试 → review”闭环。
+- [x] 对 app-server API、CLI、配置、rollout 恢复等 breaking surfaces 做过明确检查。
+- [x] 相关格式化、目标 crate 测试和必要 lint 均通过。
+- [x] 能处理至少一轮 CI 或 review feedback，不覆盖用户已有改动。
+
+## 验收摘要（2026-07-10）
+
+- fork `main` 已在确认纯 fast-forward 后同步到 `upstream/main` `6138909d6e`。
+- 独立 worktree/branch `agent/plugin-creator-hooks-validation` 完成真实 bug 的失败复现、根因、最小修复、测试与 review。
+- 贡献提交 `53a917a3ac` 已推送到个人 fork；Python 7/7、`codex-skills` 1/1、scoped Clippy 与格式化通过。
+- 已处理一轮模拟 review feedback，补充 plugin archive 逃逸和损坏 JSON 回归。
+- 根据 `docs/contributing.md` 的邀请制政策，没有向 upstream 创建未经邀请的 PR；等价 draft PR/review 包见 [阶段四证据索引](contributions/README.md)。
+- Issues [#18](https://github.com/liqiangcc/codex/issues/18)–[#23](https://github.com/liqiangcc/codex/issues/23) 已完成并关闭。
 
 ## 阶段边界
 

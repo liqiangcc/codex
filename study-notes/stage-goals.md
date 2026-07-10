@@ -45,4 +45,4 @@
 - 能为一个真实问题给出复现、根因、最小修复和对应测试。
 - 能完成一次本地 review、提交、PR 描述和 review feedback 响应闭环。
 
-状态：未开始；执行计划见 [阶段 4：上游协作与贡献](stage-4-upstream-contribution.md)。
+状态：已完成；执行与验收见 [阶段 4：上游协作与贡献](stage-4-upstream-contribution.md)，贡献闭环证据见 [上游协作与贡献证据索引](contributions/README.md)。
