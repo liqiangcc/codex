@@ -184,10 +184,9 @@ codex --ask-for-approval never exec --sandbox read-only --color never "Summarize
 
 ## 18. 待解决问题
 
-- 还需要在真实 TUI 中执行一次 `/status`，把交互式界面的模型、权限、工作目录和上下文字段补齐。
 - `CODEX_HOME` 改变后，哪些状态会重新初始化，哪些仍来自系统或环境？
 - ChatGPT 登录和 API key 登录在本学习目标下分别会限制哪些功能？
-- 当前 CLI 提示已有 `0.143.0` 更新，是否立即升级需要结合学习目标决定：先固定基线便于复现，还是先升级到最新版本便于贴近上游。
+- 2026-07-10 的子 TUI `/status` 显示 `Agents.md: <none>`，但当前仓库根目录存在 `AGENTS.md`；需要在后续源码阅读时确认 nested Codex 的 guidance 发现条件和当前环境的差异。
 
 ## 19. 当前结论
 
@@ -209,4 +208,11 @@ codex --ask-for-approval never exec --sandbox read-only --color never "Summarize
 - `codex --ask-for-approval never exec --sandbox read-only --color never "Summarize this repository in 5 bullets"` 在非交互环境中跑通，显示 workdir、model、provider、approval、sandbox 和 session id，并能读取仓库文件后生成五点摘要。
 - 当前版本的参数位置要特别注意：`--ask-for-approval` 必须放在 `exec` 前面；把它放在 `exec` 后会被 `codex exec` 解析为未知参数。
 
-本功能的阶段 1 验收暂定为：`version`、`doctor`、非交互 `exec` 已跑通，再补一次真实 TUI `/status` 后，才能从 `In Progress` 进入 `Done`。
+本功能的阶段 1 验收为：`version`、`doctor`、非交互 `exec` 和真实 TUI `/status` 均已跑通，功能地图状态为 `Done`。
+
+2026-07-10 TUI 补充实验：
+
+- 当前 `codex --version` 为 `0.144.1`，所以 2026-07-08 的 `0.142.5` 基线只适用于当时记录；后续结论必须注明版本。
+- 通过本地 `codex-tui-observer` MCP 在 PTY 中启动子 Codex，并固定使用 `--ask-for-approval never --sandbox read-only`。这能观察真实 TUI，同时避免实验修改工作区。
+- `/status` 正常展示模型 `gpt-5.6-terra`（reasoning `high`）、工作目录 `~/codex`、权限 `Read Only (never)`、协作模式 `Default` 和上下文容量；账号字段已在记录中脱敏。
+- 此次实验补齐了交互式状态页验证，因此本功能达到阶段 1 的既定验收标准并标记为 `Done`。

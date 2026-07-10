@@ -23,8 +23,8 @@
 
 | 功能 | 状态 | Issue | 详细文档 |
 | --- | --- | --- | --- |
-| 安装、登录、启动 | In Progress | [#1](https://github.com/liqiangcc/codex/issues/1) | [01-install-auth-start.md](features/01-install-auth-start.md) |
-| 交互式 coding agent | Todo | [#2](https://github.com/liqiangcc/codex/issues/2) | [02-interactive-coding-agent.md](features/02-interactive-coding-agent.md) |
+| 安装、登录、启动 | Done | [#1](https://github.com/liqiangcc/codex/issues/1) | [01-install-auth-start.md](features/01-install-auth-start.md) |
+| 交互式 coding agent | In Progress | [#2](https://github.com/liqiangcc/codex/issues/2) | [02-interactive-coding-agent.md](features/02-interactive-coding-agent.md) |
 | 非交互执行 | Todo | [#3](https://github.com/liqiangcc/codex/issues/3) | [03-non-interactive-exec.md](features/03-non-interactive-exec.md) |
 | 任务上下文 | Todo | [#4](https://github.com/liqiangcc/codex/issues/4) | [04-task-context.md](features/04-task-context.md) |
 | 权限和安全 | Todo | [#5](https://github.com/liqiangcc/codex/issues/5) | [05-permissions-and-safety.md](features/05-permissions-and-safety.md) |
