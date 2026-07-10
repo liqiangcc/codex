@@ -6,6 +6,8 @@
 
 提交：`53a917a3ac Accept plugin hooks in bundled validator`
 
+最终刷新分支 head：`d7d109c3f6`（普通 merge 最新 `upstream/main`，未改写上述原子修复提交）。
+
 文件：
 
 - `plugin-creator/scripts/validate_plugin.py`：接受并预检 Hook declarations。
@@ -20,6 +22,7 @@
 4. `just test -p codex-skills`：1/1 通过。
 5. `just fix -p codex-skills`：通过，无 Clippy 警告。
 6. `just fmt`：通过。
+7. upstream 最终前进到 `2b9c050460` 后重新合并并复测：Python 7/7、`codex-skills` 1/1 仍通过。
 
 测试使用仓库固定 Rust 1.95.0、`cargo-nextest`、新版 `just`、`dotslash` 和 `uv`。首次构建缺少 `pkg-config`/`libssl-dev`，补齐系统依赖后原命令通过；这被归类为环境依赖，不是断言失败。
 

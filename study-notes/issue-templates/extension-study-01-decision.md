@@ -1,3 +1,9 @@
+> 状态：Done
+>
+> 当前结论：扩展层级决策已完成，稳定结论见正文与详细文档。
+>
+> 下一步：无；仅在 upstream 扩展模型变化时重新验证。
+
 ## 目标
 
 为 prompt、`AGENTS.md`、Skill、MCP、Hook 和 Plugin 建立可复用的最轻层级决策法。

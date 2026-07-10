@@ -40,9 +40,16 @@ personal marketplace entry
 - `codex plugin list` 显示 `installed, enabled` 与同一版本。
 - 全新子线程 `/skills` 显示新 Skill，证明不是只更新 source 而未刷新 cache。
 
+最终卸载/恢复实验：
+
+- `codex plugin remove codex-tui-observer@personal --json` 成功后，`codex plugin list` 显示 `not installed`。
+- 新启动的 read-only 子 Codex 进入 `/skills` 并搜索显示名，`Observe Codex Study` 不可见；子进程仍被显式 stop。
+- `codex plugin add codex-tui-observer@personal` 恢复同一 cachebuster 版本，状态重新变为 `installed, enabled`。
+- 再启动一个全新子 Codex；完整列表首屏未显示该条目，但在 `/skills` 搜索 `Observe Codex Study` 后命中，证明是列表位置变化而非加载失败；子进程随后 stop。
+
 ## 禁用、卸载和凭据边界
 
 - 禁用插件后，Skill root 与 MCP server 都不应进入 effective contributions。
-- 卸载命令只针对 `codex-tui-observer@personal`；本阶段保留启用状态用于后续学习，但其行为仍是 read-only。
+- 卸载命令只针对 `codex-tui-observer@personal`；卸载与恢复均已实际验证，最终保留启用状态用于后续学习，但其行为仍是 read-only。
 - 插件不包含 token、远程 URL、生产凭据或付费 API。
 - `.mcp.json` 当前使用本机绝对 server 路径，因此是 personal plugin，不作为可移植公共市场包发布。

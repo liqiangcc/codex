@@ -45,3 +45,11 @@ config.toml or .codex/hooks.json
 - `continue:false`、`decision:block` 和 `reason` 由事件专用 parser 解释，不能用任意 stdout 模糊控制。
 - 删除项目 hook 文件即可卸载；实验没有写用户级 trust state。
 - Hook 没有放进观察器插件默认路径，避免所有 Stop 事件无条件增加 sandbox 外执行面。
+
+## 权限、数据、上下文与清理边界
+
+- Command Hook 在 Codex sandbox 外运行，因此 trust/enablement 与 agent sandbox 是两个独立权限边界；项目和插件不能替用户写入信任。
+- 本实验只接收一个 event JSON，输出一个固定、小型 JSON；不读 transcript 文件、不访问网络、不接收或保存凭据。
+- 只有事件专用 parser 明确接受的 `additionalContext`/continuation 才能进入模型上下文；任意 stdout 不能被默认当作无限上下文。
+- Runtime 对大 Hook 输出使用 `codex-rs/hooks/src/output_spill.rs` 的 spill 路径，实验本身进一步把输出限制为单行结果。
+- Handler 由 timeout 和 `kill_on_drop` 约束；直接 fixture 不留下子进程，项目 Hook 文件删除后即无可发现 handler。

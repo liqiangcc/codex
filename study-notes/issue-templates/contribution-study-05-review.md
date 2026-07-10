@@ -1,3 +1,9 @@
+> 状态：Done
+>
+> 当前结论：本地 review 和等价 draft PR 包已完成，当前无未解决发现。
+>
+> 下一步：无；获邀请后才按最新 main 重验并提交 upstream PR。
+
 ## 目标
 
 完成本地 diff review 和可直接复用的 draft PR 描述。

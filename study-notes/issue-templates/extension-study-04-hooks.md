@@ -1,3 +1,9 @@
+> 状态：Done
+>
+> 当前结论：Hook discovery、trust、事件和失败语义已完成隔离验证。
+>
+> 下一步：无；不把实验 Hook 加入默认运行链路。
+
 ## 目标
 
 理解 Hook 的来源、trust、matcher、事件输入、运行和失败语义。

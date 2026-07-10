@@ -1,3 +1,9 @@
+> 状态：Done
+>
+> 当前结论：Plugin manifest、cache、安装、卸载与恢复边界已验证。
+>
+> 下一步：无；保留 read-only personal plugin 供后续学习使用。
+
 ## 目标
 
 验证 personal Plugin 的 manifest、安装、升级、cache、禁用和卸载边界。

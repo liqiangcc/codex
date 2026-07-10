@@ -61,6 +61,7 @@
 - personal plugin 已新增 `$observe-codex-study`，Skill/Plugin 校验通过，并以 cachebuster `0.1.0+codex.20260710145859` 重装。
 - 全新只读子 Codex 的 `/skills` 列表可发现新 Skill；MCP 的启动、UI 调用、未知 session 失败和显式 stop 均已验证。
 - Stop Hook handler 的有效/无效 fixture 分别退出 0/2，`codex-hooks` 测试 120/120 通过。
+- Plugin 已实际执行 remove/re-add：卸载后的新线程搜索不到 Skill，恢复后的新线程可通过 `/skills` 搜索命中，两个子进程均保持 read-only 并显式清理。
 - Issues [#12](https://github.com/liqiangcc/codex/issues/12)–[#17](https://github.com/liqiangcc/codex/issues/17) 已完成并关闭。
 
 ## 阶段边界

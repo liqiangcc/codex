@@ -7,6 +7,7 @@
 - [学习目标和原则](goal-and-principles.md)
 - [第一阶段：用好 Codex CLI](stage-1-use-codex-well.md)
 - [学习阶段目标](stage-goals.md)
+- [四阶段完成总验收](completion-audit.md)
 - [阶段 2：核心源码链路](stage-2-source-reading.md)
 - [阶段 3：扩展与运行机制](stage-3-extensions.md)
 - [阶段 3：六主题证据索引](extensions/README.md)

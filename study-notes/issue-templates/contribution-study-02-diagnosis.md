@@ -1,3 +1,9 @@
+> 状态：Done
+>
+> 当前结论：Plugin Hook validator 漂移已被归类为真实 developer-tool bug。
+>
+> 下一步：无；若 upstream 先修复则关闭本地候选补丁。
+
 ## 目标
 
 为一个真实 upstream 问题完成分类和最小复现。

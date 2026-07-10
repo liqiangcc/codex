@@ -33,6 +33,19 @@ CLI 参数
   -> 下一次 sampling，或 assistant message 结束 turn
 ```
 
+## 逐主题验收矩阵
+
+2026-07-10 最终审计在已合入 `upstream/main` `2b9c050460` 的学习分支上重新检查了入口和符号。下面把每一项要求的输入、输出、不变量、交叉证据和剩余边界分开记录，避免只用一张流程图代替逐段理解。
+
+| 主题 | 输入 | 输出 | 不变量 | 行为或测试交叉证据 | 未纳入本阶段的边界 |
+| --- | --- | --- | --- | --- | --- |
+| CLI 分流 | `MultitoolCli` 参数、cwd、配置覆盖 | TUI、exec、review 等外层入口之一 | CLI 只选择外层运行方式，不绕过 core session/turn 模型 | 阶段 1 分别跑通 TUI PTY 和 `codex exec`；当前 `cli_main` 仍位于 `cli/src/main.rs` | 不逐个解释所有子命令解析分支 |
+| 用户输入 | `Op::UserTurn`、附件/上下文、活动 turn 状态 | `TurnContext`、`TurnInput`、pending steer 或 `RegularTask` | 用户输入先进入可记录、可重放的 turn 表示，不能直接调用模型 | `/plan`、多轮 TUI 和 exec JSONL 观察；`session/handlers.rs` 当前仍处理 `Op::UserTurn` | 不展开所有 steer/queue 竞态 |
+| 模型采样 | history 快照、`StepContext`、tools、model/provider | 流式 response items、assistant message 或 tool call | 同一 step 的 history、tools 和 context 必须来自一致请求视图 | `run_turn`、`run_sampling_request`、`try_run_sampling_request` 在当前 `session/turn.rs` 可定位 | 不分析各 provider 的全部 retry 差异 |
+| 工具运行 | 解析后的 `ToolCall`、approval/sandbox/network policy | tool output、拒绝/升级结果，再写回 history | 模型不能绕过 runtime 的 approval 与 sandbox 编排 | 阶段 1 read-only/workspace-write 对照；当前 `ToolRouter` 与 `ToolOrchestrator` 均存在 | 不覆盖每个 handler 的跨平台实现 |
+| 上下文压缩 | history、token threshold、initial context | summary 与重建后的 bounded history | 压缩替换必须保留必要用户/初始上下文并重新计算 token | `/compact` 的前置条件观察与 core compact tests 入口；`run_turn` 仍在采样前检查 compaction | 不做长线程质量评测 |
+| MCP runtime | 有效 server/plugin/config、环境与认证状态 | 当前 step 的 MCP runtime snapshot 和 tool 集合 | MCP tools 是 step-scoped runtime 投影，不是无限期静态全局表 | 阶段 3 Plugin/MCP 启动、失败、卸载和恢复实验；`runtime_mcp_config`、`mcp_runtime_for_step`、`refresh_mcp_servers_now` 当前可定位 | 不接入生产 MCP 或真实凭据 |
+
 ### 1. CLI 分流
 
 - [`codex-rs/cli/src/main.rs`](../codex-rs/cli/src/main.rs) 的 `main` 调用 `cli_main`，解析 `MultitoolCli`。

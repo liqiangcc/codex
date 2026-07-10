@@ -5,7 +5,7 @@
 ## 维护目标
 
 - `main` 持续跟随 `openai/codex/main`。
-- `00-study/codex-agent-learning` 保留个人学习材料，并定期 rebase 到最新 `main`。
+- `00-study/codex-agent-learning` 保留个人学习材料，并定期用普通 merge 吸收最新 `main`。
 - GitHub Issues 保持可行动，适合手机查看。
 - `feature-map.md` 保持索引化、稳定、不过度发散。
 - `study-notes/features/*.md` 保存详细、稳定、可复用的功能理解。
@@ -21,15 +21,16 @@
    ```
 2. 如果要基于最新 Codex 学习，先同步上游：
    ```bash
-   git checkout main
+   git switch main
    git fetch upstream
    git merge --ff-only upstream/main
    git push origin main
 
-   git checkout 00-study/codex-agent-learning
-   git rebase main
-   git push --force-with-lease
+   git switch 00-study/codex-agent-learning
+   git merge --no-edit main
+   git push origin 00-study/codex-agent-learning
    ```
+   学习分支是长期记录分支，默认保留历史并使用正常 push；不使用 rebase、force push、reset 或丢弃式 checkout 来“同步”。
 3. 打开 `feature-map.md`、对应详细功能文档和对应 GitHub issue，确认本轮只推进一个功能或一个问题。
 
 ### 每次学习中
@@ -65,7 +66,7 @@
 
 上游更新可能改变命令、配置、功能边界或文档。更新后执行：
 
-1. 同步并 rebase 学习分支。
+1. 快进 `main`，再用普通 merge 同步学习分支。
 2. 查看上游 `README.md`、`docs/`、CLI command reference 相关变化。
 3. 更新 `study-notes/features/*.md` 中受影响的功能结论。
 4. 必要时更新 `feature-map.md` 的覆盖矩阵。

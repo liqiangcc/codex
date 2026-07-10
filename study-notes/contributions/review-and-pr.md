@@ -30,7 +30,9 @@ Review 范围限定为 `upstream/main..53a917a3ac`：
 
 ## 分支状态
 
-- base：`6138909d6e`（当时最新 upstream/main）
-- head：`53a917a3ac`
+- original base：`6138909d6e`（创建分支时最新 upstream/main）
+- current base：`2b9c050460`（最终验收时最新 upstream/main）
+- fix commit：`53a917a3ac`
+- refreshed head：`d7d109c3f6`
 - remote：`origin/agent/plugin-creator-hooks-validation`
 - working tree：提交后 clean

@@ -35,10 +35,12 @@ Hook 不在默认组合内。它适合不可遗漏的事件策略，而“记录
 
 ## 源码交叉验证
 
-- Skill：`core-skills::SkillsService` 和 plugin `load_plugin_skills`。
-- MCP：session `mcp_runtime_for_step` 与 plugin `effective_mcp_servers`。
-- Hook：`discover_handlers`、`run_command` 和 Stop event parser。
-- Plugin：manifest loader、`PluginStore` 和 `PluginLoadOutcome::effective_*`。
+- Skill：`codex-rs/core-skills/src/service.rs::SkillsService` 和 `codex-rs/core-plugins/src/loader.rs::load_plugin_skills`。
+- MCP：`codex-rs/core/src/session/mcp.rs::mcp_runtime_for_step` 与 `codex-rs/plugin/src/load_outcome.rs::effective_mcp_servers`。
+- Hook：`codex-rs/hooks/src/engine/discovery.rs::discover_handlers`、`engine/command_runner.rs::run_command` 和 `events/stop.rs::run`。
+- Plugin：`codex-rs/core-plugins/src/manifest.rs::load_plugin_manifest`、`store.rs::PluginStore` 和 `codex-rs/plugin/src/load_outcome.rs::PluginLoadOutcome::effective_*`。
+
+这些是四组互相独立的直接源码入口；综合流程复用它们，不再引入一个额外的“学习自动化 core”层。
 
 ## 数据和上下文预算
 

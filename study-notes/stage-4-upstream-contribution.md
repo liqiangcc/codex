@@ -55,9 +55,9 @@
 
 ## 验收摘要（2026-07-10）
 
-- fork `main` 已在确认纯 fast-forward 后同步到 `upstream/main` `6138909d6e`。
+- fork `main` 已在确认纯 fast-forward 后同步到最终审计时的 `upstream/main` `2b9c050460`；包含本审计提交后，学习分支为 `20 ahead / 0 behind`。
 - 独立 worktree/branch `agent/plugin-creator-hooks-validation` 完成真实 bug 的失败复现、根因、最小修复、测试与 review。
-- 贡献提交 `53a917a3ac` 已推送到个人 fork；Python 7/7、`codex-skills` 1/1、scoped Clippy 与格式化通过。
+- 贡献提交 `53a917a3ac` 已推送到个人 fork，刷新分支 head 为 `d7d109c3f6`、相对 upstream `3 ahead / 0 behind`；Python 7/7、`codex-skills` 1/1、scoped Clippy 与格式化通过，最终 upstream 刷新后目标测试再次通过。
 - 已处理一轮模拟 review feedback，补充 plugin archive 逃逸和损坏 JSON 回归。
 - 根据 `docs/contributing.md` 的邀请制政策，没有向 upstream 创建未经邀请的 PR；等价 draft PR/review 包见 [阶段四证据索引](contributions/README.md)。
 - Issues [#18](https://github.com/liqiangcc/codex/issues/18)–[#23](https://github.com/liqiangcc/codex/issues/23) 已完成并关闭。
